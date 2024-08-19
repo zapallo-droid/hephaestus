@@ -1,0 +1,16 @@
+# Hephaestus
+
+**Hephaestus** is a repository designed to house various ETL projects focuses on being structured to facilitate the development, testing and deployment modular, resuable and maintained *Data Engineering Pipelines* to support the future *Data Analysis* projects of the (upcoming) repositorio [Athena]().
+
+## Repository Structure
+The repository is organized into the following main directories:
+
+* **core/:** This directory contains core utilities and libraries that are used across multiple ETL projects.
+
+* **utils/:** Helper functions and general utilities are stored here, with each helper module named using the pattern {name}_helper.py.
+  * **lib/:** Quality assurance functions are stored here to ensure the reliability and consistency of the data, with each module named using the pattern {name}_qa.py.
+  * **pipelines/:** This directory contains all individual ETL projects. Each project has its own subdirectory, which includes the necessary scripts, configurations, and data transformation logic.
+
+* **src/:** This directory contains the source code for the core logic of the ETL processes. It may include modules that are specific to certain pipelines but are general enough to be reused.
+
+* **tests/:** This directory is for all unit tests and integration tests associated with the ETL projects. Testing is crucial to ensure that each part of the pipeline works correctly and as expected.
