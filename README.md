@@ -13,6 +13,7 @@ The repository is organized into the following main directories:
   - **docs/**: Documentation specific to the pipeline project.
   - **notebooks/**: Jupyter notebooks used for exploration, prototyping, or documentation purposes.
   - **research/**: Research notes, data sources, and other relevant materials.
+  - **config/**: Configuration files required for the ETL pipeline, such as `.yaml`, `.json`, or `.env` files that define environment variables, database connections, API keys, and other settings.
 
 - **src/**: This directory contains the source code for the core logic of the ETL processes. It may include modules that are specific to certain pipelines but are general enough to be reused.
 
