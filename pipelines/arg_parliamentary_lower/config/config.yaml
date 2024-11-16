@@ -87,6 +87,9 @@ files:
   publications:
     location: "https://datos.hcdn.gob.ar/dataset/0467709c-f955-4218-a1ee-47c4d789f15a/resource/a775de5f-45ae-4eca-b35f-94fd5d8bef66/download/publicaciones1.11.json"
     secondary_location: "https://datos.hcdn.gob.ar/dataset/0467709c-f955-4218-a1ee-47c4d789f15a/resource/9ef22cd7-b7d8-47a6-bbf3-79095d47275c/download/publicaciones1.11.csv"
+  staff:
+    location: "https://datos.hcdn.gob.ar/dataset/af7136d5-84eb-49b2-af2e-aaf6319e4aae/resource/3c819c65-35c2-4671-a4f6-4e557e677c92/download/nomina3.1.json"
+    secondary_location: "https://datos.hcdn.gob.ar/dataset/af7136d5-84eb-49b2-af2e-aaf6319e4aae/resource/6e49506e-6757-44cd-94e9-0e75f3bd8c38/download/nomina3.1.csv"
 
 scrapper:
   legislative_periods:
