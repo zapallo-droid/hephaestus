@@ -1,0 +1,99 @@
+job_name: "ETL Job - Argentinian Parliament Lower Chamber"
+app_code: "alpha"
+app_name: "hephaestus"
+
+pipeline_name: "ar_hcdn"
+pipeline_code: "ar_hcdn_0001"
+
+apis:
+  url_base: "https://datos.hcdn.gob.ar/api/3/"
+  endpoints:
+    members:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "169de2eb-465f-4007-a4c2-39a5ba4c0df3"
+        limit: 100
+        offset: 0
+    committees:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "6774a719-b439-4ef9-8943-9ea66bb588c6"
+        limit: 100
+        offset: 0
+    committees_authorities:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "bef1610c-ad55-4651-826a-5a0abee8f8a6"
+        limit: 100
+        offset: 0
+    committees_members:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "8f360114-2663-43e3-99b2-e588560e5bec"
+        limit: 100
+        offset: 0
+    committees_members_groups:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "68bd5ebb-991f-4a4a-8ffd-4eee0fd608bb"
+        limit: 100
+        offset: 0
+    referral_legislation:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "b6774819-f8bc-44c7-b685-7da2e7fb3e55"
+        limit: 100
+        offset: 0
+    report_legislation:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "59595a93-5a5e-4ba6-a3db-c1044e2f949e"
+        limit: 100
+        offset: 0
+    enacted_legislation:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "68dfd7f8-91f3-4ecf-aebf-a860d1ca1a98"
+        limit: 100
+        offset: 0
+    projects:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "22b2d52c-7a0e-426b-ac0a-a3326c388ba6"
+        limit: 100
+        offset: 0
+    projects_movements:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "6108ea83-3f12-423c-a136-df1ae9cb2972"
+        limit: 100
+        offset: 0
+    projects_results:
+      endpoint: "action/datastore_search"
+      params:
+        resource_id: "daf0e90e-d94f-4186-b7cf-dfad5b6f9369"
+        limit: 100
+        offset: 0
+  headers:
+  timeout: 50
+
+files:
+  legislative_periods:
+    location: "https://datos.hcdn.gob.ar/dataset/b2081b7c-0fd5-4ea5-804d-daec6c97176e/resource/c342159d-263a-459c-bc53-2945afe33f74/download/periodos_paralamentarios1.5.json"
+    secondary_location: "https://datos.hcdn.gob.ar/dataset/b2081b7c-0fd5-4ea5-804d-daec6c97176e/resource/a3ccd8d8-800b-49bf-bcc5-564e3c51489d/download/periodos_paralamentarios1.5.csv"
+  sessions:
+    location: "https://datos.hcdn.gob.ar/dataset/f744ea10-83b4-4493-8bef-6fc9fb9e41e9/resource/ed8783bc-a755-4227-ad07-fd8ace0aeb55/download/sesiones1.9.json"
+    secondary_location: "https://datos.hcdn.gob.ar/dataset/f744ea10-83b4-4493-8bef-6fc9fb9e41e9/resource/4ac70a51-a82d-428b-966a-0a203dd0a7e3/download/sesiones1.9.csv"
+  publications:
+    location: "https://datos.hcdn.gob.ar/dataset/0467709c-f955-4218-a1ee-47c4d789f15a/resource/a775de5f-45ae-4eca-b35f-94fd5d8bef66/download/publicaciones1.11.json"
+    secondary_location: "https://datos.hcdn.gob.ar/dataset/0467709c-f955-4218-a1ee-47c4d789f15a/resource/9ef22cd7-b7d8-47a6-bbf3-79095d47275c/download/publicaciones1.11.csv"
+
+scrapper:
+  legislative_periods:
+    location: ""
+
+crawler:
+  nominal_voting:
+    location: "https://datos.hcdn.gob.ar/dataset/votaciones_nominales"
+  members_details:
+    location: "https://www.diputados.gov.ar/diputados/"
