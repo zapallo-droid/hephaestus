@@ -92,6 +92,7 @@ class Job:
         self.duration = None
         self.job_exception = None
         self.stats = {}
+        self.tasks_stats = {}
 
     def add_task(self, task: Task):
         self.tasks.append(task)
@@ -135,7 +136,7 @@ class Job:
         logging.info(f'Job {self.name}: {self.status}. Exception: {str(self.job_exception)}')
 
     def stats_builder(self):
-        tasks_stats = [task.stats_builder() for task in self.tasks]
+        self.tasks_stats = [task.stats_builder() for task in self.tasks]
 
         self.duration = (self.end_time - self.start_time).total_seconds() if self.end_time and self.start_time else None
         self.stats['status'] = self.status
@@ -147,9 +148,8 @@ class Job:
         self.stats['execution_user'] = getpass.getuser()
         self.stats['process_id'] = os.getpid()
         self.stats['number_of_tasks'] = len(self.tasks)
-        self.stats['tasks'] = tasks_stats
 
-        return self.stats
+        return self.stats, self.tasks_stats
 
     def execute(self):
         self.start()
