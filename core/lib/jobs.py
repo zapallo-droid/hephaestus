@@ -1,11 +1,15 @@
 from datetime import datetime as dt
-import logging
 import psutil
 import socket
 import getpass
 import os
 import uuid
+import traceback
+import logging
 from typing import Optional
+from core.lib.handler_bucket import BucketHandler
+from core.lib.sql_helper import DBSession, DBInitializer
+from sqlalchemy.dialects.postgresql import insert
 
 
 class Task:
@@ -70,21 +74,17 @@ class Task:
         self.stats['duration'] = self.duration
         self.stats['status'] = self.status
         self.stats['records_processed'] = self.records_processed
-        self.stats['memory_usage'] = self.stats['memory_usage_end'] - self.stats['memory_usage_start']
+        self.stats['memory_usage'] = max(0, self.stats['memory_usage_end'] - self.stats['memory_usage_start'])
         self.stats['cpu_usage'] = max(0, self.stats['cpu_usage_end'] - self.stats['cpu_usage_start'])
 
         return self.stats
 
 
 class Job:
-    def __init__(self, name: str, app_name:Optional[str]=None, app_code:Optional[str]=None,
-                 pipeline_code:Optional[str]=None, pipeline_name:Optional[str]=None):
+    def __init__(self, name: str, app_code:Optional[str]=None):
         self.name = name
         self.job_id = f'J-{str(uuid.uuid4())}'
-        self.app_name = app_name
         self.app_code = app_code
-        self.pipeline_code = pipeline_code
-        self.pipeline_name = pipeline_name
         self.tasks = []
         self.start_time = None
         self.end_time = None
@@ -105,9 +105,6 @@ class Job:
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
         self.stats['name'] = self.name
         self.stats['app_code'] = self.app_code
-        self.stats['app_name'] = self.app_name
-        self.stats['pipeline_code'] = self.pipeline_code
-        self.stats['pipeline_name'] = self.pipeline_name
         self.stats['job_id'] = self.job_id
         self.stats['name'] = self.name
         self.stats['memory_usage_start'] = psutil.virtual_memory().used / (1024 ** 2)
@@ -142,7 +139,7 @@ class Job:
         self.stats['status'] = self.status
         self.stats['exception'] = str(self.job_exception)
         self.stats['duration'] = self.duration
-        self.stats['memory_usage'] = self.stats['memory_usage_end'] - self.stats['memory_usage_start']
+        self.stats['memory_usage'] =  max(0, self.stats['memory_usage_end'] - self.stats['memory_usage_start'])  # Avoid negative usage
         self.stats['cpu_usage'] = max(0, self.stats['cpu_usage_end'] - self.stats['cpu_usage_start'])  # Avoid negative CPU usage
         self.stats['host_name'] = socket.gethostname()
         self.stats['execution_user'] = getpass.getuser()
@@ -167,6 +164,76 @@ class Job:
             self.fail()
         finally:
             self.stats_builder()
+
+    def run_job(self):
+        # Adding Job Tasks
+        self.add_extract_task()
+
+        # Job Execution
+        self.execute()
+
+        job_stats, tasks_stats = self.stats_builder()
+
+        # STATS
+        # - Stats Data To Cosmos
+        logging.info("Writing Job {job.get('job_id')} stats" in {os.path.join(self.cosmos_path, 'stats/')})
+
+        for stats in [(job_stats, 'J'), (tasks_stats, 'T')]:
+            BucketHandler(path=self.cosmos_path).exporter(data=stats[0],
+                                                          file_name=f'{stats[1]}_{self.job_id}',
+                                                          folder='jobs/',
+                                                          mode='wt')
+
+        # - Stats Data To Daedalus
+        logging.info("Sending Job {job.get('job_id')} stats to Daedalus DB")
+        db_session = DBSession(**self.daedalus_config)
+        session = db_session.create()
+
+        try:
+            # Getting typical stats file
+            job_stats = BucketHandler(path=self.cosmos_path).importer(file_name=f'J_{self.job_id}',
+                                                                      folder='jobs/')
+
+            tasks_stats = BucketHandler(path=self.cosmos_path).importer(file_name=f'T_{self.job_id}',
+                                                                        folder='jobs/')
+
+            # -- Loading data to DB
+            job_data = {
+                'job_id': job_stats.get('job_id'),
+                'name': job_stats.get('name'),
+                'memory_usage_start': job_stats.get('memory_usage_start'),
+                'cpu_usage_start': job_stats.get('cpu_usage_start'),
+                'memory_usage_end': job_stats.get('memory_usage_end'),
+                'cpu_usage_end': job_stats.get('cpu_usage_end'),
+                'status': job_stats.get('status'),
+                'exception': job_stats.get('exception'),
+                'duration': job_stats.get('duration'),
+                'memory_usage': job_stats.get('memory_usage'),
+                'cpu_usage': job_stats.get('cpu_usage'),
+                'host_name': job_stats.get('host_name'),
+                'execution_user': job_stats.get('execution_user'),
+                'process_id': job_stats.get('process_id'),
+                'number_of_tasks': job_stats.get('number_of_tasks'),
+                'app_code': job_stats.get('app_code')
+            }
+            sentence = insert(self.JobORM).values(job_data).on_conflict_do_nothing(index_elements=['job_id'])
+            session.execute(sentence)
+
+            for task in tasks_stats:
+                sentence = insert(self.TaskORM).values(task).on_conflict_do_nothing(index_elements=['task_id'])
+                session.execute(sentence)
+
+            session.commit()
+
+        except Exception as e:
+            session.rollback()
+            logging.warning(
+                f"Session rollback --> Exception occurred: {e}\n"
+                f"Traceback details:\n{traceback.format_exc()}"
+            )
+
+        finally:
+            session.close()
 
 
 

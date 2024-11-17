@@ -1,11 +1,11 @@
+import os
 import requests
 import numpy as np
-import time
-import random
 import logging
 from tqdm import tqdm
 from typing import Any, Optional
 from core.lib.handler_bucket import BucketHandler
+from core.lib.jobs import Task
 
 logging.basicConfig(level=logging.INFO)
 
@@ -104,3 +104,74 @@ class APIIteratorCall:
             return False
         else:
             return self.total_records ==len(self.extracted_data)
+
+
+class APIExtractor(Task):
+    def __init__(self, job_id:str, name:str, data_source:str, config:dict, path:str):
+        self.config = config
+        self.path = path
+        self.name = name
+        self.job_id = job_id
+        self.pipeline_code = config.get("pipeline_code")
+        self.url_base = self.config.get('apis', {}).get('url_base', str)
+        self.data_source = data_source
+        self.endpoint = self.config.get('apis', {}).get('endpoints', {}).get(self.data_source).get('endpoint', str)
+        self.params = self.config.get('apis', {}).get('endpoints', {}).get(self.data_source).get('params', dict)
+        self.headers = self.config.get('apis', {}).get('headers', {})
+        self.timeout = self.config.get('apis', {}).get('timeout', 50)
+        self.location = f"{self.url_base}{self.endpoint}?resource_id={self.params.get('resource_id')}"
+
+        self.records_processed = None
+        self.task_image = None
+        self.task_image_status = None
+        self.location_status = None
+        self.data = None
+        self.job_timestamp = None
+
+        super().__init__(job_id=self.job_id, name=self.name, pipeline_code=self.pipeline_code, location=self.location)
+
+    def run(self, job):
+        logging.info(f'Working on: {self.data_source}')
+
+        try:
+            self.job_timestamp = job.start_time
+
+            file_name = f"{self.config.get('pipeline_code', '')}_{self.data_source}"
+            folder = f'raw/{self.job_id}'
+            self.task_image = os.path.join(self.path, folder, f'{file_name}.json.gz')
+
+            exporter_dict = {'path': self.path,
+                             'file_name':file_name,
+                             'folder':folder}
+
+            iterator_caller = APIIteratorCall(url_base=self.url_base,
+                                              endpoint=self.endpoint,
+                                              params=self.params,
+                                              headers=self.headers,
+                                              timeout=self.timeout
+                                              )
+
+            self.data = iterator_caller.get_data(partial_write=True, params=exporter_dict).extracted_data
+            self.records_processed = len(self.data)
+
+            response_status = iterator_caller.response # Considering that the APIIterator return a dict here
+            self.location_status = {resp.get('call'): resp.get('response') for resp in response_status}
+            max_call = max(self.location_status)
+            self.location_status = self.location_status.get(max_call)
+
+            logging.info(f'The extraction for {self.data_source} succeed: {iterator_caller.consistency_check()}')
+
+            if iterator_caller.consistency_check():
+                logging.info(f'Exporting {self.data_source} to {self.path}')
+                self.task_image_status = 'complete'
+            else:
+                self.task_image_status = 'failed'
+                logging.error(f'The consistency check failed when working on: {self.data_source}')
+
+        except Exception as e:
+            self.task_exception = e
+            logging.error(f'The run failed: Exception {str(e)}')
+
+
+
+

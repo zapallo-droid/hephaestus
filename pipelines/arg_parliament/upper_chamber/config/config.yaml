@@ -1,0 +1,30 @@
+pipeline_domain_code: "dom001"
+pipeline_code: "arg1002"
+
+files:
+  members_history:
+    location: "https://www.senado.gob.ar/micrositios/DatosAbiertos/ExportarListadoSenadoresHistorico/json"
+  members:
+    location: "https://www.senado.gob.ar/micrositios/DatosAbiertos/ExportarListadoSenadores/json"
+  staff:
+    location: "https://www.senado.gob.ar/micrositios/DatosAbiertos/ExportarListadoAgentes/json?TIPO=1"
+  contract_based_staff:
+    location: "https://www.senado.gob.ar/micrositios/DatosAbiertos/ExportarListadoContratos/json"
+
+scrapper:
+  legislative_periods:
+    location: ""
+  legislative_periods:
+    location: ""
+
+crawler:
+  unicameral_committees:
+    location: "https://www.senado.gob.ar/parlamentario/comisiones/"
+  bicameral_committees:
+    location: "https://www.senado.gob.ar/parlamentario/comisiones/"
+  members:
+    location: "https://www.senado.gob.ar/senadores/listados/listaSenadoRes"
+  voting:
+    location: "https://www.senado.gob.ar/votaciones/actas"
+  sessions:
+    location: "https://www.senado.gob.ar/parlamentario/sesiones/busquedaTac"

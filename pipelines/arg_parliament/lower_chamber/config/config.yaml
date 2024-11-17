@@ -1,9 +1,5 @@
-job_name: "ETL Job - Argentinian Parliament Lower Chamber"
-app_code: "alpha"
-app_name: "hephaestus"
-
-pipeline_name: "ar_hcdn"
-pipeline_code: "ar_hcdn_0001"
+pipeline_domain_code: "dom001"
+pipeline_code: "arg1001"
 
 apis:
   url_base: "https://datos.hcdn.gob.ar/api/3/"
