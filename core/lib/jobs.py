@@ -13,9 +13,12 @@ from sqlalchemy.dialects.postgresql import insert
 
 
 class Task:
-    def __init__(self, job_id:str, name: str, pipeline_code: str, location:Optional[str] = None):
+    def __init__(self, job_id:str, name: str, pipeline_code: str, source_code: str, task_type_code:str,
+                 location:Optional[str] = None):
         self.name = name
         self.location = location
+        self.source_code = source_code
+        self.task_type_code = task_type_code
         self.location_status = None
         self.job_id = job_id
         self.pipeline_code = pipeline_code
@@ -26,18 +29,33 @@ class Task:
         self.duration = None
         self.records_processed = 0
         self.task_exception = None
-        self.stats = {}
+        self.stats = {
+            'job_id': self.job_id,
+            'task_id': self.task_id,
+            'pipeline_code': self.pipeline_code,
+            'name': self.name,
+            'source_code': self.source_code,
+            'task_type_code': self.task_type_code,
+            'location': self.location,
+            'memory_usage_start': 0,
+            'memory_usage_end': 0,
+            'cpu_usage_start': 0,
+            'cpu_usage_end': 0,
+            'started_at': None,
+            'ended_at': None,
+            'duration': None,
+            'status': self.status,
+            'records_processed': 0,
+            'exception': None,
+            'location_status': None
+        }
 
     def start(self):
         self.start_time = dt.now()
         self.status = 'started'
+        self.stats['started_at'] = self.start_time
 
         psutil.cpu_percent(interval=1) # Priming measure (reset state)
-        self.stats['job_id'] = self.job_id
-        self.stats['task_id'] = self.task_id
-        self.stats['pipeline_code'] = self.pipeline_code
-        self.stats['name'] = self.name
-        self.stats['location'] = self.location
         self.stats['memory_usage_start'] = psutil.virtual_memory().used / (1024 ** 2)
         self.stats['cpu_usage_start'] = psutil.cpu_percent(interval=1)
 
@@ -45,6 +63,7 @@ class Task:
 
     def finish(self):
         self.end_time = dt.now()
+        self.stats['ended_at'] = self.end_time
         self.duration = (self.end_time - self.start_time).total_seconds()
         self.status = 'finished'
 
@@ -56,8 +75,10 @@ class Task:
 
     def fail(self, exception: Optional[Exception] = None, location_status:Optional[str]=None):
         self.end_time = dt.now()
+        self.stats['ended_at'] = self.end_time
         self.duration = (self.end_time - self.start_time).total_seconds()
         self.status = 'failed'
+        self.stats['exception'] = str(self.task_exception) if str(self.task_exception) is not None else str(exception)
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
         self.stats['memory_usage_end'] = psutil.virtual_memory().used / (1024 ** 2)
@@ -70,7 +91,6 @@ class Task:
         self.stats['location_status'] = self.location_status
         self.stats['task_image'] = self.task_image
         self.stats['task_image_status'] = self.task_image_status
-        self.stats['exception'] = str(self.task_exception)
         self.stats['duration'] = self.duration
         self.stats['status'] = self.status
         self.stats['records_processed'] = self.records_processed
@@ -91,22 +111,35 @@ class Job:
         self.status = 'not started'
         self.duration = None
         self.job_exception = None
-        self.stats = {}
-        self.tasks_stats = {}
+        self.stats = {
+            'name': self.name,
+            'app_code': self.app_code,
+            'job_id': self.job_id,
+            'memory_usage_start': 0,
+            'memory_usage_end': 0,
+            'cpu_usage_start': 0,
+            'cpu_usage_end': 0,
+            'started_at': None,
+            'ended_at': None,
+            'duration': None,
+            'status': self.status,
+            'exception': None,
+            'host_name': socket.gethostname(),
+            'execution_user': getpass.getuser(),
+            'process_id': os.getpid(),
+            'number_of_tasks': 0,
+        }
 
     def add_task(self, task: Task):
         self.tasks.append(task)
 
     def start(self):
         self.start_time = dt.now()
+        self.stats['started_at'] = self.start_time
         self.status = 'started'
 
         # Prime CPU measure and reset
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
-        self.stats['name'] = self.name
-        self.stats['app_code'] = self.app_code
-        self.stats['job_id'] = self.job_id
-        self.stats['name'] = self.name
         self.stats['memory_usage_start'] = psutil.virtual_memory().used / (1024 ** 2)
         self.stats['cpu_usage_start'] = psutil.cpu_percent(interval=1)
 
@@ -114,6 +147,7 @@ class Job:
 
     def finish(self):
         self.end_time = dt.now()
+        self.stats['ended_at'] = self.end_time
         self.status = 'finished'
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
@@ -124,6 +158,7 @@ class Job:
 
     def fail(self):
         self.end_time = dt.now()
+        self.stats['ended_at'] = self.end_time
         self.status = 'failed'
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
@@ -175,27 +210,11 @@ class Job:
         job_stats, tasks_stats = self.stats_builder()
 
         # STATS
-        # - Stats Data To Cosmos
-        logging.info("Writing Job {job.get('job_id')} stats" in {os.path.join(self.cosmos_path, 'stats/')})
-
-        for stats in [(job_stats, 'J'), (tasks_stats, 'T')]:
-            BucketHandler(path=self.cosmos_path).exporter(data=stats[0],
-                                                          file_name=f'{stats[1]}_{self.job_id}',
-                                                          folder='jobs/',
-                                                          mode='wt')
-
         # - Stats Data To Daedalus
-        logging.info("Sending Job {job.get('job_id')} stats to Daedalus DB")
-        db_session = DBSession(**self.daedalus_config)
-        session = db_session.create()
-
         try:
-            # Getting typical stats file
-            job_stats = BucketHandler(path=self.cosmos_path).importer(file_name=f'J_{self.job_id}',
-                                                                      folder='jobs/')
-
-            tasks_stats = BucketHandler(path=self.cosmos_path).importer(file_name=f'T_{self.job_id}',
-                                                                        folder='jobs/')
+            logging.info("Sending Job {job.get('job_id')} stats to Daedalus DB")
+            db_session = DBSession(**self.daedalus_config)
+            session = db_session.create()
 
             # -- Loading data to DB
             job_data = {
@@ -207,6 +226,8 @@ class Job:
                 'cpu_usage_end': job_stats.get('cpu_usage_end'),
                 'status': job_stats.get('status'),
                 'exception': job_stats.get('exception'),
+                'started_at': job_stats.get('started_at'),
+                'ended_at': job_stats.get('ended_at'),
                 'duration': job_stats.get('duration'),
                 'memory_usage': job_stats.get('memory_usage'),
                 'cpu_usage': job_stats.get('cpu_usage'),
@@ -234,6 +255,28 @@ class Job:
 
         finally:
             session.close()
+
+            # - Stats Data To Cosmos
+            logging.info("Writing Job {job.get('job_id')} stats" in {os.path.join(self.cosmos_path, 'stats/')})
+
+
+            for key in ['started_at', 'ended_at']:
+                job_stats[key] = job_stats.get(key).isoformat()
+
+                for item in tasks_stats:
+                    item[key] = item.get(key).isoformat()
+
+            try:
+                for stats in [(job_stats, 'J'), (tasks_stats, 'T')]:
+                    BucketHandler(path=self.cosmos_path).exporter(data=stats[0],
+                                                                  file_name=f'{stats[1]}_{self.job_id}',
+                                                                  folder='jobs/',
+                                                                  mode='wt')
+
+            except Exception as e:
+                logging.error(f'Exception raised when loading stats into Cosmos --> {str(e)}')
+
+
 
 
 

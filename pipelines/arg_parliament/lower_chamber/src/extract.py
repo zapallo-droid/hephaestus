@@ -19,20 +19,17 @@ class LowerChamberExtract:
         # - Reading Configuration File
         self.config_data = ProjectConfig(path=os.path.join(self.system_path,
                                                            'pipelines/arg_parliament/lower_chamber',
-                                                           'config/config.yaml')).config_loader()
-
-        self.pipeline_name = self.config_data.get('pipeline_name')
+                                                           'config/sources.json')).sources_loader()
 
     def tasks_definition(self):
         # 1st Segment: API Tasks
-        api_data_sources = self.config_data.get('apis', dict)
+        api_data_sources = [record for record in self.config_data if record.get('location_type') == 'API']
 
         if api_data_sources:
-            api_data_sources = api_data_sources.get('endpoints', dict)
-            for data_source in tqdm(api_data_sources.keys(), desc='Adding API endpoints Tasks'):
-                task = APIExtractor(name=f"API {data_source} extraction",
-                                    data_source=data_source,
-                                    config=self.config_data,
+            for data_source in tqdm(api_data_sources, desc='Adding API endpoints Tasks'):
+                task = APIExtractor(name=f"API {data_source.get('source_name')} extraction",
+                                    data_source=data_source.get('source_name'),
+                                    config=data_source,
                                     path=self.cosmos_path,
                                     job_id=self.job_id
                                     )
@@ -40,16 +37,16 @@ class LowerChamberExtract:
                 time.sleep(random.uniform(1, 3))
 
         # 2nd Segment: Files Tasks
-        files_data_sources = self.config_data.get('files', dict)
+        files_data_sources = [record for record in self.config_data if record.get('location_type') == 'FILE']
+
         if files_data_sources:
-            for data_source in tqdm(files_data_sources.keys(), desc='Adding Files Data Tasks'):
-                task = FilesExtractor(name=f"File {data_source} extraction",
-                                      data_source=data_source,
-                                      config=self.config_data,
+            for data_source in tqdm(files_data_sources, desc='Adding Files Data Tasks'):
+                task = FilesExtractor(name=f"File {data_source.get('source_name')} extraction",
+                                      data_source=data_source.get('source_name'),
+                                      config=data_source,
                                       path=self.cosmos_path,
                                       job_id=self.job_id
                                       )
-
                 self.tasks.append(task)
                 time.sleep(random.uniform(1, 3))
 

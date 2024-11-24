@@ -2,7 +2,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from typing import Optional
-from pipelines.arg_parliamentary_lower.orchestrator import ArgParliamentLowerJob
+from pipelines.arg_parliament.orchestrator import ArgParliamentPipeline
 
 # Config and Parameters
 load_dotenv()
@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 def get_pipeline(pipeline_name):
 
     pipe_dict = {
-        'arg_hcdn': ArgParliamentLowerJob
+        'dom001': ArgParliamentPipeline
         #TBD with new pipelines
     }
 
@@ -49,5 +49,6 @@ def main_extractor(pipeline_name, system_path:Optional[str]=None,
 
 if __name__ == '__main__':
     # Execution -- Extraction
-    main_extractor('arg_hcdn', system_path=s_path, cosmos_path=c_path,
-                   frameworks_path=f_path, daedalus_config=daedalus_conn)
+    for pip_key in ['dom001']:
+        main_extractor(pipeline_name=pip_key, system_path=s_path, cosmos_path=c_path,
+                       frameworks_path=f_path, daedalus_config=daedalus_conn)

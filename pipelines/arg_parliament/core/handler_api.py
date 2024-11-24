@@ -113,12 +113,13 @@ class APIExtractor(Task):
         self.name = name
         self.job_id = job_id
         self.pipeline_code = config.get("pipeline_code")
-        self.url_base = self.config.get('apis', {}).get('url_base', str)
+        self.source_code = config.get("source_code")
+        self.url_base = self.config.get('location', {})
         self.data_source = data_source
-        self.endpoint = self.config.get('apis', {}).get('endpoints', {}).get(self.data_source).get('endpoint', str)
-        self.params = self.config.get('apis', {}).get('endpoints', {}).get(self.data_source).get('params', dict)
-        self.headers = self.config.get('apis', {}).get('headers', {})
-        self.timeout = self.config.get('apis', {}).get('timeout', 50)
+        self.endpoint = self.config.get('location_endpoint', {})
+        self.params = self.config.get('params', dict)
+        self.headers = self.config.get('headers', {})
+        self.timeout = self.config.get('timeout', 50)
         self.location = f"{self.url_base}{self.endpoint}?resource_id={self.params.get('resource_id')}"
 
         self.records_processed = None
@@ -127,8 +128,10 @@ class APIExtractor(Task):
         self.location_status = None
         self.data = None
         self.job_timestamp = None
+        self.task_exception = None
 
-        super().__init__(job_id=self.job_id, name=self.name, pipeline_code=self.pipeline_code, location=self.location)
+        super().__init__(job_id=self.job_id, name=self.name, pipeline_code=self.pipeline_code,
+                         source_code=self.source_code, location=self.location, task_type_code='ttc001')
 
     def run(self, job):
         logging.info(f'Working on: {self.data_source}')
@@ -136,7 +139,7 @@ class APIExtractor(Task):
         try:
             self.job_timestamp = job.start_time
 
-            file_name = f"{self.config.get('pipeline_code', '')}_{self.data_source}"
+            file_name = f"{self.config.get('pipeline_code', '')}_{self.source_code}"
             folder = f'raw/{self.job_id}'
             self.task_image = os.path.join(self.path, folder, f'{file_name}.json.gz')
 
