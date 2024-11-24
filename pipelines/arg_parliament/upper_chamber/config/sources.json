@@ -1,0 +1,42 @@
+[
+  {"source_code": "sou016",
+   "source_name": "Upper Chamber Members Historical",
+   "location_type": "FILE",
+   "location": "https://www.senado.gob.ar/micrositios/DatosAbiertos/ExportarListadoSenadoresHistorico/json",
+   "location_endpoint": "",
+   "extension": "json",
+   "extract_type": "GET",
+   "params": "",
+   "pipeline_code": "pip002"
+  },
+  {"source_code": "sou017",
+   "source_name": "Upper Chamber Members",
+   "location_type": "FILE",
+   "location": "https://www.senado.gob.ar/micrositios/DatosAbiertos/ExportarListadoSenadores/json",
+   "location_endpoint": "",
+   "extension": "json",
+   "extract_type": "GET",
+   "params": "",
+   "pipeline_code": "pip002"
+  },
+  {"source_code": "sou018",
+   "source_name": "Upper Chamber Staff",
+   "location_type": "FILE",
+   "location": "https://www.senado.gob.ar/micrositios/DatosAbiertos/ExportarListadoAgentes/json",
+   "location_endpoint": "",
+   "extension": "json",
+   "extract_type": "GET",
+   "params": "",
+   "pipeline_code": "pip002"
+  },
+  {"source_code": "sou019",
+   "source_name": "Upper Chamber Contract Based Staff",
+   "location_type": "FILE",
+   "location": "https://www.senado.gob.ar/micrositios/DatosAbiertos/ExportarListadoContratos/json",
+   "location_endpoint": "",
+   "extension": "json",
+   "extract_type": "GET",
+   "params": "",
+   "pipeline_code": "pip002"
+  }
+]
