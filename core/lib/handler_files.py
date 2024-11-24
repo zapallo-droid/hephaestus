@@ -2,7 +2,7 @@ import requests
 import logging
 import os
 import csv
-import json
+import gzip
 from typing import Any, Union
 from core.lib.handler_bucket import BucketHandler
 from core.lib.jobs import Task
@@ -34,12 +34,12 @@ class FilesExtractor(Task):
         self.name = name
         self.job_id = job_id
         self.pipeline_code = config.get("pipeline_code")
+        self.source_code = config.get("source_code")
         self.data_source = data_source
         self.params = None
         self.headers = None
         self.timeout = None
-        self.location = (self.config.get('files', {}).get(self.data_source).get('location') or
-                         self.config.get('files', {}).get(self.data_source).get('secondary_location'))
+        self.location = self.config.get('location', {})
         self.url_base = self.location
 
         self.records_processed = None
@@ -48,8 +48,10 @@ class FilesExtractor(Task):
         self.location_status = None
         self.data = None
         self.job_timestamp = None
+        self.task_exception = None
 
-        super().__init__(job_id=self.job_id, name=self.name, pipeline_code=self.pipeline_code, location=self.location)
+        super().__init__(job_id=self.job_id, name=self.name, pipeline_code=self.pipeline_code,
+                         source_code=self.source_code, location=self.location, task_type_code='ttc001')
 
     def run(self, job):
         logging.info(f'Working on file {self.data_source}')
@@ -57,32 +59,25 @@ class FilesExtractor(Task):
         try:
             self.job_timestamp = job.start_time
 
-            if 'json' in self.location:
-                data_caller = FileCall(self.location)
-                self.data = json.loads(data_caller.get_data())
-                self.location_status = data_caller.response.status_code
+            data_caller = FileCall(self.location)
+            self.data = data_caller.get_data()
+            self.location_status = data_caller.response.status_code
 
-            else:
-                data_caller = FileCall(self.location)
-                self.data = data_caller.get_data().decode('utf-8').splitlines()
-                self.location_status = data_caller.response.status_code
-                self.data = csv.DictReader(self.data)
-                self.data = list(self.data)
-                self.data = json.dumps(self.data, indent=4)
-
-            logging.info(f'Exporting {self.data_source} to {self.path}')
-
-            file_name = f"{self.config.get('pipeline_code', '')}_{self.data_source}"
+            file_name = f"{self.config.get('pipeline_code', '')}_{self.source_code}"
             folder = f'raw/{self.job_id}'
+            file_path = os.path.join(self.path, folder)
 
-            self.task_image = os.path.join(self.path, folder, f'{file_name}.json.gz')
+            logging.info(f'Exporting {self.data_source} to {file_path}')
+
+            self.task_image = os.path.join(file_path, f'{file_name}.bin.gz')
             self.task_image_status = 'complete'
             self.records_processed = len(self.data)
 
-            BucketHandler(path=self.path).exporter(data=self.data,
-                                                   file_name=file_name,
-                                                   folder=folder,
-                                                   mode='wt')
+            os.makedirs(file_path, exist_ok=True)
+
+            with gzip.open(self.task_image, 'wb') as file:
+                file.write(self.data)
 
         except Exception as e:
             self.task_exception = e
+            self.task_image_status = 'failed'
