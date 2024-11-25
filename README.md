@@ -20,5 +20,3 @@ The repository is organized into the following main directories:
 - **tests/**: This directory is for all unit tests and integration tests associated with the ETL projects. Testing is crucial to ensure that each part of the pipeline works correctly and as expected.
 
 - **docs/**: High-level documentation for the entire repository, including an overview of the ETL pipelines.
-
-

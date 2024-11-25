@@ -1,0 +1,7 @@
+job_name: "ETL Job - Argentinian Parliament"
+
+app_code: "app001"
+app_name: "hephaestus"
+
+pipeline_domain_code: "dom001"
+pipeline_domain_name: "Argentinian Parliament"
