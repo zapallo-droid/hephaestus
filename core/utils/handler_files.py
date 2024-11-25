@@ -1,11 +1,9 @@
 import requests
 import logging
 import os
-import csv
 import gzip
 from typing import Any, Union
-from core.lib.handler_bucket import BucketHandler
-from core.lib.jobs import Task
+from core.model.jobs import Task
 
 
 class FileCall:

@@ -4,8 +4,8 @@ import numpy as np
 import logging
 from tqdm import tqdm
 from typing import Any, Optional
-from core.lib.handler_bucket import BucketHandler
-from core.lib.jobs import Task
+from core.utils.handler_bucket import BucketHandler
+from core.model.jobs import Task
 
 logging.basicConfig(level=logging.INFO)
 

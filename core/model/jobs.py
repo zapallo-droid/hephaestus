@@ -7,8 +7,8 @@ import uuid
 import traceback
 import logging
 from typing import Optional
-from core.lib.handler_bucket import BucketHandler
-from core.lib.sql_helper import DBSession, DBInitializer
+from core.utils.handler_bucket import BucketHandler
+from core.utils.sql_helper import DBSession
 from sqlalchemy.dialects.postgresql import insert
 
 
