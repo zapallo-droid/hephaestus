@@ -6,8 +6,9 @@
 The repository is organized into the following main directories:
 
 - **core/**: This directory contains core utilities and libraries that are used across multiple ETL projects.
-  - **utils/**: Helper functions and general utilities are stored here, with each helper module named using the pattern `{name}_helper.py`.
-  - **lib/**: Quality assurance functions are stored here to ensure the reliability and consistency of the data, with each module named using the pattern `{name}_qa.py`.
+  - **utils/**: Helper functions and general utilities are stored here.
+  - **lib/**: Quality assurance functions are stored here to ensure the reliability and consistency of the data.
+  - **model/**: Classes for entities management.
 
 - **pipelines/**: This directory contains all individual ETL projects. Each project has its own subdirectory, which includes the necessary scripts, configurations, and data transformation logic. Each subfolder includes:
   - **docs/**: Documentation specific to the pipeline project.
