@@ -3,7 +3,7 @@ import time
 import random
 from tqdm import tqdm
 from pipelines.arg_parliament.core.handler_api import APIExtractor
-from core.utils.helper import ProjectConfig
+from core.utils.general_helper import ProjectConfig
 from core.utils.handler_files import FilesExtractor
 
 

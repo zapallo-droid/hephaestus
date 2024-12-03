@@ -1,6 +1,6 @@
 import os
 import sys
-from core.utils.helper import ProjectConfig
+from core.utils.general_helper import ProjectConfig
 from core.model.jobs import Job
 from pipelines.arg_parliament.lower_chamber.src.extract import LowerChamberExtract
 from pipelines.arg_parliament.upper_chamber.src.extract import UpperChamberExtract

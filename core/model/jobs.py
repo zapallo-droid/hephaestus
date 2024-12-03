@@ -22,7 +22,7 @@ class Task:
         self.location_status = None
         self.job_id = job_id
         self.pipeline_code = pipeline_code
-        self.task_id = f'T-{str(uuid.uuid4())}'
+        self.task_id = uuid.uuid4()
         self.start_time = None
         self.end_time = None
         self.status = 'not started'
@@ -103,7 +103,7 @@ class Task:
 class Job:
     def __init__(self, name: str, app_code:Optional[str]=None):
         self.name = name
-        self.job_id = f'J-{str(uuid.uuid4())}'
+        self.job_id = uuid.uuid4()
         self.app_code = app_code
         self.tasks = []
         self.start_time = None

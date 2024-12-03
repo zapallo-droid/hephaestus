@@ -131,7 +131,7 @@ class APIExtractor(Task):
         self.task_exception = None
 
         super().__init__(job_id=self.job_id, name=self.name, pipeline_code=self.pipeline_code,
-                         source_code=self.source_code, location=self.location, task_type_code='ttc001')
+                         source_code=self.source_code, location=self.location, task_type_code='7ae81b6c-9a4f-4582-be4d-1f14cc14b269')
 
     def run(self, job):
         logging.info(f'Working on: {self.data_source}')

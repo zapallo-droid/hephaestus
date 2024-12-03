@@ -2,7 +2,7 @@ import os
 import time
 import random
 from tqdm import tqdm
-from core.utils.helper import ProjectConfig
+from core.utils.general_helper import ProjectConfig
 from core.utils.handler_files import FilesExtractor
 
 
