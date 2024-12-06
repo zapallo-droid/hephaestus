@@ -266,6 +266,13 @@ class Job:
                 for item in tasks_stats:
                     item[key] = item.get(key).isoformat()
 
+            for record in tasks_stats:
+                for key in ['job_id','task_id','pipeline_code','source_code','task_type_code']:
+                    record[key] = str(record.get(key))
+
+            for key in ['job_id','app_code']:
+                job_stats[key] = str(job_stats.get(key))
+
             try:
                 for stats in [(job_stats, 'J'), (tasks_stats, 'T')]:
                     BucketHandler(path=self.cosmos_path).exporter(data=stats[0],
@@ -275,10 +282,3 @@ class Job:
 
             except Exception as e:
                 logging.error(f'Exception raised when loading stats into Cosmos --> {str(e)}')
-
-
-
-
-
-
-
