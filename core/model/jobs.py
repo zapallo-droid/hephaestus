@@ -7,8 +7,8 @@ import uuid
 import traceback
 import logging
 from typing import Optional
-from core.lib.handler_bucket import BucketHandler
-from core.lib.sql_helper import DBSession, DBInitializer
+from core.utils.handler_bucket import BucketHandler
+from core.utils.sql_helper import DBSession
 from sqlalchemy.dialects.postgresql import insert
 
 
@@ -22,7 +22,7 @@ class Task:
         self.location_status = None
         self.job_id = job_id
         self.pipeline_code = pipeline_code
-        self.task_id = f'T-{str(uuid.uuid4())}'
+        self.task_id = uuid.uuid4()
         self.start_time = None
         self.end_time = None
         self.status = 'not started'
@@ -103,7 +103,7 @@ class Task:
 class Job:
     def __init__(self, name: str, app_code:Optional[str]=None):
         self.name = name
-        self.job_id = f'J-{str(uuid.uuid4())}'
+        self.job_id = uuid.uuid4()
         self.app_code = app_code
         self.tasks = []
         self.start_time = None
@@ -266,6 +266,13 @@ class Job:
                 for item in tasks_stats:
                     item[key] = item.get(key).isoformat()
 
+            for record in tasks_stats:
+                for key in ['job_id','task_id','pipeline_code','source_code','task_type_code']:
+                    record[key] = str(record.get(key))
+
+            for key in ['job_id','app_code']:
+                job_stats[key] = str(job_stats.get(key))
+
             try:
                 for stats in [(job_stats, 'J'), (tasks_stats, 'T')]:
                     BucketHandler(path=self.cosmos_path).exporter(data=stats[0],
@@ -275,10 +282,3 @@ class Job:
 
             except Exception as e:
                 logging.error(f'Exception raised when loading stats into Cosmos --> {str(e)}')
-
-
-
-
-
-
-
