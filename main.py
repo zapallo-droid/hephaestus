@@ -3,6 +3,7 @@ import logging
 from dotenv import load_dotenv
 from typing import Optional
 from pipelines.arg_parliament.orchestrator import ArgParliamentPipeline
+from pipelines.ilostat.orchestrator import IlostatPipeline
 
 # Config and Parameters
 load_dotenv()
@@ -23,7 +24,8 @@ logging.basicConfig(level=logging.INFO)
 def get_pipeline(pipeline_name):
 
     pipe_dict = {
-        'dom001': ArgParliamentPipeline
+        'dom001': ArgParliamentPipeline,
+        'dom002': IlostatPipeline
         #TBD with new pipelines
     }
 
@@ -49,6 +51,6 @@ def main_extractor(pipeline_name, system_path:Optional[str]=None,
 
 if __name__ == '__main__':
     # Execution -- Extraction
-    for pip_key in ['dom001']:
+    for pip_key in ['dom002']:
         main_extractor(pipeline_name=pip_key, system_path=s_path, cosmos_path=c_path,
                        frameworks_path=f_path, daedalus_config=daedalus_conn)
