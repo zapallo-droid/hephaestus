@@ -1,6 +1,6 @@
 [
   {
-    "source_code": "3cce502b-a891-410a-b25b-ebd20867990a",
+    "source_code": "13e72ca3-f295-43f9-91dd-9d9826c4da8e",
     "source_name": "Lower Chamber Members",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -10,13 +10,13 @@
     "params": {"resource_id": "169de2eb-465f-4007-a4c2-39a5ba4c0df3", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102307",
+    "updated_at": "2025-01-06 00:19:48.102313"
   },
   {
-    "source_code": "ec1d97cf-afef-4e68-9863-c5041db0aaad",
+    "source_code": "34db8f5e-f894-43fe-a97f-cdedfa4126c8",
     "source_name": "Lower Chamber Committees",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -26,29 +26,13 @@
     "params": {"resource_id": "6774a719-b439-4ef9-8943-9ea66bb588c6", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102317",
+    "updated_at": "2025-01-06 00:19:48.102318"
   },
   {
-    "source_code": "d9ffaffc-f158-4b34-a854-a1d3c1b33f81",
-    "source_name": "Lower Chamber Committees Authorities",
-    "location_type": "API",
-    "location": "https://datos.hcdn.gob.ar/api/3/",
-    "location_endpoint": "action/datastore_search",
-    "extension": "",
-    "extract_type": "GET",
-    "params": {"resource_id": "bef1610c-ad55-4651-826a-5a0abee8f8a6", "limit": 100, "offset": 0},
-    "headers": null,
-    "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
-    "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
-  },
-  {
-    "source_code": "6668ba89-e508-48bb-9cef-5d611017d018",
+    "source_code": "a4bebe7d-8c33-4721-a62c-f9206270ce94",
     "source_name": "Lower Chamber Committees Members",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -58,13 +42,13 @@
     "params": {"resource_id": "8f360114-2663-43e3-99b2-e588560e5bec", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102321",
+    "updated_at": "2025-01-06 00:19:48.102322"
   },
   {
-    "source_code": "163249f3-24cd-41eb-a4df-f64d4a86246e",
+    "source_code": "4557f03b-91d8-4b4b-9d95-f3f6ea778abd",
     "source_name": "Lower Chamber Committees Members Groups",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -74,13 +58,13 @@
     "params": {"resource_id": "68bd5ebb-991f-4a4a-8ffd-4eee0fd608bb", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102324",
+    "updated_at": "2025-01-06 00:19:48.102324"
   },
   {
-    "source_code": "971994b1-aff3-495f-885c-bb993723bfba",
+    "source_code": "efdceff4-21ae-4c6a-b002-88d08d625c35",
     "source_name": "Lower Chamber Referral Legislation",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -90,13 +74,13 @@
     "params": {"resource_id": "b6774819-f8bc-44c7-b685-7da2e7fb3e55", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102326",
+    "updated_at": "2025-01-06 00:19:48.102327"
   },
   {
-    "source_code": "e68bdbae-ec9e-4362-80ba-523f25c19b6a",
+    "source_code": "68cfe77e-e6a8-4b98-9266-e04ec687977d",
     "source_name": "Lower Chamber Report Legislation",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -106,13 +90,13 @@
     "params": {"resource_id": "59595a93-5a5e-4ba6-a3db-c1044e2f949e", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102329",
+    "updated_at": "2025-01-06 00:19:48.102330"
   },
   {
-    "source_code": "bc45e924-4d22-4a64-a8aa-87d964649ca9",
+    "source_code": "ca5fada5-f8ce-4276-8dbe-63e0abbabfba",
     "source_name": "Lower Chamber Enacted Legislation",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -122,13 +106,13 @@
     "params": {"resource_id": "68dfd7f8-91f3-4ecf-aebf-a860d1ca1a98", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102331",
+    "updated_at": "2025-01-06 00:19:48.102332"
   },
   {
-    "source_code": "469db898-553c-44cb-b441-8ddfa9a436d8",
+    "source_code": "2716c55c-c7b9-404f-b9c9-40d7b4bc8a02",
     "source_name": "Lower Chamber Legislation Projects",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -138,13 +122,13 @@
     "params": {"resource_id": "22b2d52c-7a0e-426b-ac0a-a3326c388ba6", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102335",
+    "updated_at": "2025-01-06 00:19:48.102336"
   },
   {
-    "source_code": "086bd0f8-4152-4bd2-85ec-11bc4f74009b",
+    "source_code": "ab319474-fd1d-489e-bde1-960f0e97f1ea",
     "source_name": "Lower Chamber Legislation Projects Movement",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -154,13 +138,13 @@
     "params": {"resource_id": "6108ea83-3f12-423c-a136-df1ae9cb2972", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102338",
+    "updated_at": "2025-01-06 00:19:48.102338"
   },
   {
-    "source_code": "11d99870-4c67-4da3-9291-d2c2e82b9cae",
+    "source_code": "23373952-33ed-4ddd-ad8e-024e93a2f191",
     "source_name": "Lower Chamber Projects Results",
     "location_type": "API",
     "location": "https://datos.hcdn.gob.ar/api/3/",
@@ -170,13 +154,13 @@
     "params": {"resource_id": "daf0e90e-d94f-4186-b7cf-dfad5b6f9369", "limit": 100, "offset": 0},
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.564656",
-    "updated_at": "2024-12-03 03:40:46.564656"
+    "created_at": "2025-01-06 00:19:48.102340",
+    "updated_at": "2025-01-06 00:19:48.102341"
   },
   {
-    "source_code": "575a6a9d-dd17-4a47-8dd1-5d0e89a606e1",
+    "source_code": "ca2de93d-5fc5-4ed1-ac96-7e635a20ab57",
     "source_name": "Legislative Periods",
     "location_type": "FILE",
     "location": "https://datos.hcdn.gob.ar/dataset/b2081b7c-0fd5-4ea5-804d-daec6c97176e/resource/c342159d-263a-459c-bc53-2945afe33f74/download/periodos_paralamentarios1.5.json",
@@ -186,13 +170,13 @@
     "params": "",
     "headers": null,
     "timeout": null,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.568656",
-    "updated_at": "2024-12-03 03:40:46.568656"
+    "created_at": "2025-01-06 00:19:48.103844",
+    "updated_at": "2025-01-06 00:19:48.103846"
   },
   {
-    "source_code": "341688b8-fc68-43d5-9ed0-6b61dafa95b8",
+    "source_code": "3489b292-47ce-46c2-973c-883181cef22c",
     "source_name": "Lower Chamber Sessions",
     "location_type": "FILE",
     "location": "https://datos.hcdn.gob.ar/dataset/f744ea10-83b4-4493-8bef-6fc9fb9e41e9/resource/ed8783bc-a755-4227-ad07-fd8ace0aeb55/download/sesiones1.9.json",
@@ -202,13 +186,13 @@
     "params": "",
     "headers": null,
     "timeout": null,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.568656",
-    "updated_at": "2024-12-03 03:40:46.568656"
+    "created_at": "2025-01-06 00:19:48.103850",
+    "updated_at": "2025-01-06 00:19:48.103851"
   },
   {
-    "source_code": "54656f17-bbb7-49cf-8847-092287c6a695",
+    "source_code": "53fedeb6-5ca2-45b3-92d2-3475c29e0256",
     "source_name": "Lower Chamber Publications",
     "location_type": "FILE",
     "location": "https://datos.hcdn.gob.ar/dataset/0467709c-f955-4218-a1ee-47c4d789f15a/resource/a775de5f-45ae-4eca-b35f-94fd5d8bef66/download/publicaciones1.11.json",
@@ -218,13 +202,13 @@
     "params": "",
     "headers": null,
     "timeout": null,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.568656",
-    "updated_at": "2024-12-03 03:40:46.568656"
+    "created_at": "2025-01-06 00:19:48.103853",
+    "updated_at": "2025-01-06 00:19:48.103854"
   },
   {
-    "source_code": "ab94a2b9-43c3-4e2c-a1dd-15f069848534",
+    "source_code": "fe1f7624-9e09-45d4-b21c-f13b540b2936",
     "source_name": "Lower Chamber Staff",
     "location_type": "FILE",
     "location": "https://datos.hcdn.gob.ar/dataset/af7136d5-84eb-49b2-af2e-aaf6319e4aae/resource/3c819c65-35c2-4671-a4f6-4e557e677c92/download/nomina3.1.json",
@@ -234,9 +218,9 @@
     "params": "",
     "headers": null,
     "timeout": null,
-    "pipeline_code": "97e9b4c2-83c6-445b-acbf-3aee7fc2dfb8",
+    "pipeline_code": "0782a025-0c6d-40eb-af0b-f987be26df6e",
     "active": true,
-    "created_at": "2024-12-03 03:40:46.568656",
-    "updated_at": "2024-12-03 03:40:46.568656"
+    "created_at": "2025-01-06 00:19:48.103856",
+    "updated_at": "2025-01-06 00:19:48.103856"
   }
 ]
