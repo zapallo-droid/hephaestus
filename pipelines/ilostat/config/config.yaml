@@ -1,7 +1,6 @@
 job_name: "ETL Job - ILOSTAT"
 
-app_code: "807c22fc-6c58-4fd5-bc7a-c42665eae481"
+app_code: "SLPdkGkoVEw"
 app_name: "hephaestus"
 
-pipeline_domain_code: "cd81dd79-070c-4ee6-a499-cc387769c762"
-pipeline_domain_name: "International Labour Organization"
+ISCO_pipeline_code: "UY3zhDM2P2X"

@@ -1,10 +1,10 @@
-
-from typing import Optional
-from sqlalchemy import create_engine, MetaData
+import uuid
+import logging
+from typing import Optional, Union
+from sqlalchemy import create_engine, MetaData, select, func
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
-import logging
-
+from core.model.elysium.model_data_ops import Source as SourceORM, Task as TaskORM
 
 class DBConnection:
     def __init__(self, db_location: str):
@@ -136,7 +136,8 @@ class DB:
     def get_session(self):
         return self.Session()
 
-    def records_loader(self, model: declarative_base, records: list[dict], commit=True):
+    def records_loader(self, model: declarative_base, records: list[Union[dict,object]], commit=True, task_id:Optional[
+        uuid.UUID]=None):
 
         primary_keys = list(model.__table__.primary_key.columns.keys())
 
@@ -145,26 +146,84 @@ class DB:
 
         primary_key = primary_keys[0]
 
-        ### When a record don't have a primary_key key will be treated as a new record (by default the DB will create
-        # for each record a UUID)
-        logging.info('Getting records to insert')
-        insert_records = [record for record in records if primary_key not in record.keys()]
+        # Type of Load
+        if records:
+            load_type = 'dictionary' if isinstance(records[0], dict) else 'object'
+        else:
+            load_type = None
+        logging.info(f"Loading {load_type} records from {model.__tablename__}")
 
+        # initializing Lineage Metadata
+        for record in records:
+            if load_type == 'dictionary':
+                record['lineage_metadata'] ={}
+            else:
+                if not hasattr(record, 'lineage_metadata') or record.lineage_metadata is None:
+                    record.lineage_metadata = {}
+
+        # Listing Records by Type
+        if load_type == 'dictionary':
+            insert_records = [record for record in records if primary_key not in record.keys()]
+            update_records = [record for record in records if primary_key in record.keys()]
+
+            # Records with PK not in DB (When loading DB from old records) -- Missing Records
+            existing_keys = {
+                key for (key,) in self.session.query(getattr(model, primary_key))
+                .filter(getattr(model, primary_key).in_([record.get(primary_key) for record in update_records]))
+            }
+            missing_records = [record for record in update_records if record.get(primary_key) not in existing_keys]
+
+            # Final update records (records that exist in DB)
+            update_records = [record for record in update_records if record.get(primary_key) in existing_keys]
+
+        else:
+            insert_records = [record for record in records if getattr(record, primary_key, None) is None]
+            insert_records = [record.__dict__.copy() for record in insert_records]
+
+            update_records = [record for record in records if getattr(record, primary_key, None) is not None]
+
+            # Records with PK not in DB (When loading DB from old records) -- Missing Records
+            existing_keys = {
+                key for (key,) in self.session.query(getattr(model, primary_key))
+                .filter(getattr(model, primary_key).in_([getattr(record, primary_key, None) for record in update_records]))
+            }
+            missing_records = [record for record in update_records if getattr(record, primary_key, None) not in existing_keys]
+            missing_records = [record.__dict__.copy() for record in missing_records]
+
+            # Final update records (records that exist in DB)
+            update_records = [record for record in update_records if getattr(record, primary_key, None) in existing_keys]
+            update_records = [record.__dict__.copy() for record in update_records]
+            for record in update_records:
+                record.pop("_sa_instance_state", None)
+
+        insert_records.extend(missing_records)
+
+        # Absolutely New records (Those with no primary key, DB will create for each record an UUID) and
+        if task_id is not None:
+            for record in insert_records:
+                if load_type == 'dictionary':
+                    record['lineage_metadata']['created_in_task'] = str(task_id)
+                    record['lineage_metadata']['modified_in_task'] = str(task_id)
+                else:
+                    record.lineage_metadata['created_in_task'] = str(task_id)
+                    record.lineage_metadata['modified_in_task'] = str(task_id)
+
+        # Updates
         logging.info('Getting records to update Keys')
-        update_records = [record for record in records if primary_key in record.keys()]
+        if task_id is not None:
+            for record in update_records:
+                if load_type == 'dictionary':
+                    record['lineage_metadata']['modified_in_task'] = str(task_id)
+                else:
+                    record.lineage_metadata['modified_in_task'] = str(task_id)
 
-        existing_keys = {
-            key for (key,) in self.session.query(getattr(model, primary_key))
-            .filter(getattr(model, primary_key).in_([record.get(primary_key) for record in update_records]))
-        }
-        logging.info('Getting records to update')
-        update_records = [record for record in update_records if record.get(primary_key) in existing_keys]
-
+        # Loading Data to DB
         logging.info('Loading data to the DB')
         try:
             if update_records:
                 logging.info(f"Records to update: {len(update_records)}")
                 self.session.bulk_update_mappings(model, update_records)
+
             if insert_records:
                 logging.info(f"Records to insert: {len(insert_records)}")
                 self.session.bulk_insert_mappings(model, insert_records)
@@ -172,7 +231,9 @@ class DB:
             if commit:
                 self.session.commit()
 
-            return {"updated": len(update_records), "inserted": len(insert_records), "skipped": len(records) - len(update_records) - len(insert_records)}
+            return {"updated": len(update_records),
+                    "inserted": len(insert_records),
+                    "skipped": len(records) - len(update_records) - len(insert_records)}
 
 
         except Exception as e:
@@ -181,3 +242,50 @@ class DB:
             logging.debug(f"Failed insert records: {insert_records}")
             logging.debug(f"Failed update records: {update_records}")
             raise
+
+
+class ConfigSources:
+    def __init__(self, db_config:dict):
+        self.db_config = db_config
+        self.config_data = None
+
+        # Session
+        self.session = DBSession(**self.db_config).create()
+
+    def close_session(self):
+        self.session.close()
+
+    def config(self, pipeline_code:str, close_session:bool=True) -> dict:
+        # JOB Config and Init
+        # - Reading Configuration File
+        query = select(*SourceORM.__table__.columns).where((SourceORM.pipeline_code == pipeline_code) &
+                                                           (SourceORM.active == True))
+        config_data = self.session.execute(query).mappings().all()
+
+        if close_session:
+            self.close_session()
+
+        return config_data
+
+    def source_latest_image(self,
+                            source_code:str,
+                            task_type_code:str,
+                            status:str,
+                            close_session:bool=True) -> str:
+
+        # Conditionals
+        conditionals = ((TaskORM.task_type_code == task_type_code) &
+                        (TaskORM.source_code == source_code) &
+                        (TaskORM.status == status))
+
+        # SubQueries
+        subquery = select(func.max(TaskORM.ended_at)).where(conditionals).scalar_subquery()
+
+        # Execution
+        query = select(TaskORM.task_image).where(conditionals & (TaskORM.ended_at == subquery))
+        path = self.session.execute(query).mappings().all()[0].get('task_image')
+
+        if close_session:
+            self.close_session()
+
+        return path
