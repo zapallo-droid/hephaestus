@@ -23,30 +23,31 @@ class BucketHandler:
 
         os.makedirs(file_path, exist_ok=True)
 
+        #try:
+        #    with gzip.open(os.path.join(file_path, f'{file_name}.json.gz'), mode=exp_mode) as f:
+        #        json.dump(data, f, indent=4)
         try:
             with gzip.open(os.path.join(file_path, f'{file_name}.json.gz'), mode=exp_mode) as f:
-                json.dump(data, f, indent=4)
+                for item in data:
+                    f.write(json.dumps(item) + '\n') # To allow partial json writing
             logging.info(f'File {file_name}.json.gz exported to: {file_path}')
+
         except Exception as e:
             logging.error(f'The file {file_name} was not exported to {file_path} due to: {str(e)}')
 
-    def importer(self, file_name: str, folder: Optional[str] = None) -> dict:
+    def importer(self, file_name: str, folder: Optional[str] = None) -> list:
 
-        if folder is None:
-            file_path = os.path.join(self.path)
-        else:
-            file_path = os.path.join(self.path, folder)
-
-        file_path = os.path.join(file_path, f'{file_name}.json.gz')
+        file_path = os.path.join(self.path, folder or "", f"{file_name}.json.gz")
 
         try:
             logging.info(f'Reading {file_name} from the bucket')
-            with gzip.open(file_path, 'rt') as f:
-                data = json.load(f)
+
+            with gzip.open(file_path, 'rt', encoding="utf-8") as f:
+                data = [json.loads(line) for line in f]
+
             logging.info(f'File {file_name}.json.gz successfully read from: {file_path}')
             return data
-        except FileNotFoundError:
-            logging.error(f'The file {file_name}.json.gz was not found in {file_path}')
+
         except Exception as e:
             logging.error(f'An error occurred while reading {file_name} from {file_path}: {str(e)}')
             raise
