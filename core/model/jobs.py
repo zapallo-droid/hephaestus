@@ -164,8 +164,8 @@ class Task:
 
 
     def execute(self, db):
-        self.start() ##REMOVE IF FAIL
-        db.records_loader(model=TaskORM, records=[TaskORM(**self.stats)]) ##REMOVE IF FAIL
+        self.start()
+        db.records_loader(model=TaskORM, records=[TaskORM(**self.stats)])
 
         try:
             self.run()
@@ -273,8 +273,8 @@ class Job:
 
     def execute(self):
         self.start()
-        db = DB(db_config=self.db_config) ##REMOVE IF FAIL
-        db.records_loader(model=JobORM, records=[JobORM(**self.stats)]) ##REMOVE IF FAIL
+        db = DB(db_config=self.db_config)
+        db.records_loader(model=JobORM, records=[JobORM(**self.stats)])
 
         try:
             for task in self.tasks:

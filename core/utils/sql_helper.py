@@ -1,8 +1,6 @@
 import uuid
 import logging
 import json
-import numpy as np
-from datetime import datetime
 from typing import Optional, Union
 from sqlalchemy import create_engine, MetaData, select, func
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -248,8 +246,8 @@ class DB:
                             record_id=record_id,
                             task_id=task_id,
                             operation_type_code='U',
-                            previous_value=json.dumps(json_cleaner(previous_value)),  # Full old record for reference
-                            new_value=json.dumps(json_cleaner(changes))  # Only store changed fields
+                            previous_value=json.dumps(json_cleaner(previous_value)),
+                            new_value=json.dumps(json_cleaner(changes))
                         ))
 
         # Loading Data to DB
