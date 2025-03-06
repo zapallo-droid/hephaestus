@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import pandas as pd
 from core.model.jobs import Task
+from core.utils.handler_bucket import BucketHandler
 
 class ISCOTransform(Task):
     def __init__(self, job_id:str, name:str, config:dict, bucket_path:str):
@@ -105,7 +106,7 @@ class ISCOTransform(Task):
         except Exception as e:
             self.fail(e)
 
-    def get_roles(self) -> list[dict]:
+    def get_data(self) -> list[dict]:
         try:
             data = self.get_base_data()
             roles_cluster = self.get_roles_clusters(data)
@@ -150,45 +151,13 @@ class ISCOTransform(Task):
         logging.info(f'Processing file: {self.name}')
 
         try:
-            self.data = self.get_roles()
+            self.data = self.get_data()
 
-            if self.data:
-                file_name = f"{self.config.get('pipeline_code', '')}_{self.source_code}"
-                folder = f'transformed/{self.job_id}'
-                file_path = os.path.join(self.bucket_path, folder)
-
-                logging.info(f'Exporting {self.name} to {file_path}')
-
-                self.task_image = os.path.join(file_path, f'{file_name}.csv.gz')
-                self.records_processed = len(self.data)
-
-                os.makedirs(file_path, exist_ok=True)
-
-                if not self.data:
-                    e = Exception("No data transformed")
-                    self.fail(e)
-                    raise e
-
-                with gzip.open(self.task_image, 'wt', encoding='utf-8') as f:
-                    if isinstance(self.data, list) and self.data:
-                        try:
-                            json.dump(self.data, f, ensure_ascii=False, indent=4)
-                        except Exception as e:
-                            self.fail(e)
-                            raise e
-                    else:
-                        e = ValueError("Unexpected data format")
-                        self.fail(e)
-                        raise e
-
-                logging.info(f'{self.records_processed} records, successfully loaded')
-
-            else:
-                logging.warning("No data transformed")
-                e = Exception("No data transformed")
-                self.fail(e)
-                raise e
+            self.bucket_imaging(data=self.data,
+                                pipeline_config=self.config,
+                                bucket_path=self.bucket_path)
 
         except Exception as e:
             self.fail(e)
+
 

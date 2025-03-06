@@ -2,7 +2,7 @@ import os
 import json
 import gzip
 import logging
-from typing import Optional
+from typing import Optional, Union
 
 logging.basicConfig(level=logging.INFO)
 
@@ -10,7 +10,8 @@ class BucketHandler:
     def __init__(self, path: str):
         self.path = path
 
-    def exporter(self, data: dict, file_name: str , folder: Optional[str] = None, mode: Optional[str] = None):
+    def exporter(self, data: Union[dict, list], file_name: str, folder: Optional[str] = None, mode: Optional[str] = None,
+                 partial:bool = True):
 
         logging.info(f'Writing {file_name} in the bucket')
 
@@ -23,17 +24,25 @@ class BucketHandler:
 
         os.makedirs(file_path, exist_ok=True)
 
-        #try:
-        #    with gzip.open(os.path.join(file_path, f'{file_name}.json.gz'), mode=exp_mode) as f:
-        #        json.dump(data, f, indent=4)
-        try:
-            with gzip.open(os.path.join(file_path, f'{file_name}.json.gz'), mode=exp_mode) as f:
-                for item in data:
-                    f.write(json.dumps(item) + '\n') # To allow partial json writing
-            logging.info(f'File {file_name}.json.gz exported to: {file_path}')
+        if partial:
+            try:
+                with gzip.open(os.path.join(file_path, f'{file_name}.json.gz'), mode=exp_mode, encoding='utf-8') as f:
+                    for item in data:
+                        f.write(json.dumps(item) + '\n') # To allow partial json writing
+                logging.info(f'File {file_name}.json.gz exported to: {file_path}')
 
-        except Exception as e:
-            logging.error(f'The file {file_name} was not exported to {file_path} due to: {str(e)}')
+            except Exception as e:
+                logging.error(f'The file {file_name} was not exported to {file_path} due to: {str(e)}')
+
+        else:
+            try:
+                with gzip.open(os.path.join(file_path, f'{file_name}.json.gz'), mode=exp_mode, encoding='utf-8') as f:
+                    if isinstance(data, list) and data:
+                        json.dump(data, f, ensure_ascii=False, indent=4)
+
+            except Exception as e:
+                logging.error(f'The file {file_name} was not exported to {file_path} due to: {str(e)}')
+
 
     def importer(self, file_name: str, folder: Optional[str] = None) -> list:
 

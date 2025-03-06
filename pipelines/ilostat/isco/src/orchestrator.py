@@ -53,7 +53,7 @@ class ISCO(TaskManager):
                 location = os.path.join(self.cosmos_path,
                                         "transformed",
                                         str(self.job_id),
-                                        f"{str(data_source.get('pipeline_code'))}_{str(data_source.get('source_code'))}.csv.gz")
+                                        f"{str(data_source.get('pipeline_code'))}_{str(data_source.get('source_code'))}.json.gz")
 
                 task = ElysiumLoad(job_id=self.job_id,
                                    name=f"File {data_source.get('source_name')} load",

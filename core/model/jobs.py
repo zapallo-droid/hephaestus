@@ -62,6 +62,7 @@ class Task:
             'location_status': None
         }
 
+
     def start(self):
         self.start_time = dt.now()
         self.status = Task.STATUS_STARTED
@@ -71,6 +72,8 @@ class Task:
         psutil.cpu_percent(interval=1) # Priming measure (reset state)
         self.stats['memory_usage_start'] = psutil.virtual_memory().used / (1024 ** 2)
         self.stats['cpu_usage_start'] = psutil.cpu_percent(interval=1)
+
+        self.stats_builder()
 
         logging.info(f'{self.name} {self.status}')
 
@@ -120,9 +123,50 @@ class Task:
         e = NotImplementedError('Subclasses must implement this method')
         self.fail(e)
 
+    def bucket_imaging(self, data:list[dict], pipeline_config:dict, bucket_path:str):
+        logging.info(f'Bucketing file: {self.name}')
 
-    def execute(self):
-        self.start()
+        try:
+            if data:
+                file_name = f"{pipeline_config.get('pipeline_code', '')}_{self.source_code}"
+
+                if self.task_type_code == "E":
+                    folder = f'raw/{self.job_id}'
+                elif self.task_type_code == "T":
+                    folder = f'transformed/{self.job_id}'
+                else:
+                    folder = None
+                    logging.error(f'Task type code should be E or T, received {self.task_type_code}')
+
+                file_path = os.path.join(bucket_path, folder)
+
+                logging.info(f'Exporting {self.name} to {file_path}')
+
+                self.task_image = os.path.join(file_path, f'{file_name}.json.gz')
+                self.records_processed = len(data)
+
+                bucket = BucketHandler(path=bucket_path)
+                bucket.exporter(data=data,
+                                file_name=file_name,
+                                folder=folder,
+                                partial=False)
+
+                logging.info(f'{self.records_processed} records, successfully loaded')
+
+            else:
+                logging.warning("No data received")
+                e = Exception("No data received")
+                self.fail(e)
+                raise e
+
+        except Exception as e:
+            self.fail(e)
+
+
+    def execute(self, db):
+        self.start() ##REMOVE IF FAIL
+        db.records_loader(model=TaskORM, records=[TaskORM(**self.stats)]) ##REMOVE IF FAIL
+
         try:
             self.run()
             self.finish()
@@ -157,8 +201,10 @@ class Job:
             'job_id': self.job_id,
             'memory_usage_start': 0,
             'memory_usage_end': 0,
+            'memory_usage':0,
             'cpu_usage_start': 0,
             'cpu_usage_end': 0,
+            'cpu_usage':0,
             'started_at': None,
             'ended_at': None,
             'duration': None,
@@ -227,9 +273,12 @@ class Job:
 
     def execute(self):
         self.start()
+        db = DB(db_config=self.db_config) ##REMOVE IF FAIL
+        db.records_loader(model=JobORM, records=[JobORM(**self.stats)]) ##REMOVE IF FAIL
+
         try:
             for task in self.tasks:
-                task.execute()
+                task.execute(db=db)
             self.finish()
         except Exception as e:
             self.fail(e)

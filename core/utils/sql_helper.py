@@ -1,10 +1,15 @@
 import uuid
 import logging
+import json
+import numpy as np
+from datetime import datetime
 from typing import Optional, Union
 from sqlalchemy import create_engine, MetaData, select, func
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
-from core.model.elysium.model_data_ops import Source as SourceORM, Task as TaskORM
+from core.utils.general_helper import json_cleaner
+from core.model.elysium.model_data_ops import Source as SourceORM, Task as TaskORM, AuditLog as AuditLogORM, AuditLog
+
 
 class DBConnection:
     def __init__(self, db_location: str):
@@ -151,14 +156,20 @@ class DB:
             load_type = 'dictionary' if isinstance(records[0], dict) else 'object'
         else:
             load_type = None
+
         logging.info(f"Loading {load_type} records from {model.__tablename__}")
 
         # initializing Lineage Metadata
         for record in records:
-            if load_type == 'dictionary':
-                record['lineage_metadata'] ={}
+            if task_id is not None:
+                if load_type == 'dictionary':
+                    record['lineage_metadata'] = record.get('lineage_metadata', {'modified_in': {'task': str(task_id)}})
+                else:
+                    record.lineage_metadata = {'modified_in': {'task': str(task_id)}}
             else:
-                if not hasattr(record, 'lineage_metadata') or record.lineage_metadata is None:
+                if load_type == 'dictionary':
+                    record['lineage_metadata'] = record.get('lineage_metadata', {})
+                else:
                     record.lineage_metadata = {}
 
         # Listing Records by Type
@@ -198,24 +209,48 @@ class DB:
 
         insert_records.extend(missing_records)
 
-        # Absolutely New records (Those with no primary key, DB will create for each record an UUID) and
-        if task_id is not None:
-            for record in insert_records:
-                if load_type == 'dictionary':
-                    record['lineage_metadata']['created_in_task'] = str(task_id)
-                    record['lineage_metadata']['modified_in_task'] = str(task_id)
-                else:
-                    record.lineage_metadata['created_in_task'] = str(task_id)
-                    record.lineage_metadata['modified_in_task'] = str(task_id)
+        # Audit Logs Payload
+        audit_logs = None
+        excluded_schemas = ["operations"]
 
-        # Updates
-        logging.info('Getting records to update Keys')
-        if task_id is not None:
-            for record in update_records:
-                if load_type == 'dictionary':
-                    record['lineage_metadata']['modified_in_task'] = str(task_id)
-                else:
-                    record.lineage_metadata['modified_in_task'] = str(task_id)
+        if task_id is not None and getattr(model.__table_args__, "schema", None) not in excluded_schemas:
+            audit_logs = []
+            # INSERTS
+            for record in insert_records:
+                audit_logs.append(AuditLogORM(table_name=model.__tablename__,
+                                              record_id=str(record[primary_key]),
+                                              task_id=task_id,
+                                              operation_type_code='C',
+                                              previous_value=None,
+                                              new_value=json.dumps(json_cleaner(record)))
+                                  )
+
+            # UPDATES
+            if len(update_records)>0:
+                # Querying Existing Records
+                conditions = getattr(model.__table__.c, primary_key).in_(existing_keys)
+                query = select(*model.__table__.columns).where(conditions)
+                existing_records = self.session.execute(query).fetchall()
+
+                existing_dict = {str(getattr(record, primary_key)): dict(record._mapping) for record in existing_records}
+
+                for record in update_records:
+                    record_id = str(record[primary_key])
+                    previous_value = existing_dict.get(record_id, {})
+
+                    # Keeping only changed values in both, previous and current (changes)
+                    changes = {k: v for k, v in record.items() if previous_value.get(k) != v}
+                    previous_value = {k: previous_value[k] for k in changes}
+
+                    if changes:  # Only log if there are actual changes
+                        audit_logs.append(AuditLogORM(
+                            table_name=model.__tablename__,
+                            record_id=record_id,
+                            task_id=task_id,
+                            operation_type_code='U',
+                            previous_value=json.dumps(json_cleaner(previous_value)),  # Full old record for reference
+                            new_value=json.dumps(json_cleaner(changes))  # Only store changed fields
+                        ))
 
         # Loading Data to DB
         logging.info('Loading data to the DB')
@@ -228,13 +263,17 @@ class DB:
                 logging.info(f"Records to insert: {len(insert_records)}")
                 self.session.bulk_insert_mappings(model, insert_records)
 
+            if audit_logs is not None:
+                logging.info(f"Audit logs to insert: {len(audit_logs)}")
+                self.session.bulk_save_objects(audit_logs)
+
             if commit:
                 self.session.commit()
 
             return {"updated": len(update_records),
                     "inserted": len(insert_records),
-                    "skipped": len(records) - len(update_records) - len(insert_records)}
-
+                    "skipped": len(records) - len(update_records) - len(insert_records),
+                    "logs": len(audit_logs) if audit_logs is not None else 0}
 
         except Exception as e:
             self.session.rollback()

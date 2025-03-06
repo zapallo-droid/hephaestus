@@ -13,7 +13,8 @@ from core.model.elysium.resources.geopolitical_entities import (GeopoliticalEnti
                                                                 GeopoliticalSubEntity as GeopoliticalSubEntityORM)
 from core.model.elysium.model_data_ops import (App as AppORM, Pipeline as PipelineORM, Job as JobORM,
                                                Task as TaskORM, Source as SourceORM, TaskType as TaskTypeORM,
-                                               PipelineDomain as PipelineDomainORM)
+                                               PipelineDomain as PipelineDomainORM, OperationType as OperationTypeORM,
+                                               AuditLog as AuditLogORM)
 
 
 class ElysiumLoad(Task):
@@ -115,7 +116,7 @@ if __name__ == '__main__':
         # DB Init
         db = DB(db_config=elysium_config,
                 orm_objects=[AppORM, PipelineDomainORM, PipelineORM, SourceORM, JobORM, TaskTypeORM, TaskORM,
-                             RoleORM, GeopoliticalEntityORM, GeopoliticalSubEntityORM])
+                             RoleORM, OperationTypeORM, AuditLogORM, GeopoliticalEntityORM, GeopoliticalSubEntityORM])
 
         db.db_init()
 
@@ -129,9 +130,12 @@ if __name__ == '__main__':
 
         db.records_loader(model=PipelineORM, records=pipeline_objects)
 
+        db.records_loader(model=OperationTypeORM, records=[{'operation_type_code': 'C', 'operation_type_name': 'create'},
+                                                           {'operation_type_code': 'U', 'operation_type_name': 'update'},
+                                                           {'operation_type_code': 'D', 'operation_type_name': 'delete'}])
 
         #import json
-        #with open('',
+        #with open('C:/Users/jrab9/OneDrive/08.Github/hephaestus/pipelines/arg_census/config/sources.json',
         #          'r',
         #          encoding="utf-8") as f:
 
