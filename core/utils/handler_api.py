@@ -16,15 +16,14 @@ class APIClientCall:
         self.timeout = timeout
         self.response = None
 
-    def get_data(self, endpoint: str, params: dict[str, Any]=None) -> dict:
+    def get_data(self, params: dict[str, Any]=None) -> dict:
         """
         Fetch data from API endpoint trough get method
-        :param endpoint: str: API endpoint
         :param params: Dict: parameters of the call
         :return: Dict: json if exists in response
         """
 
-        url = f'{self.url_base}/{endpoint}'
+        url = f'{self.url_base}'
         try:
             self.response = requests.get(url, headers=self.headers, params=params, timeout=self.timeout)
             self.response.raise_for_status()
@@ -39,16 +38,23 @@ class APIClientCall:
 
 
 class APIIteratorCall:
-    def __init__(self, url_base: str, endpoint: str, headers: Optional[dict[str, str]] = None,
+    def __init__(self, url_base: str, total_attribute:str, results_attribute:str,
+                 sub_results_attribute:Optional[str]=None, limit_attribute:Optional[str]=None,
+                 offset_attribute:Optional[str]=None, headers: Optional[dict[str, str]] = None,
                  timeout: Optional[int] = 30, params: Optional[dict[str, Any]] = None):
+
         self.url_base: str = url_base
-        self.endpoint: str = endpoint
+        self.total_attribute: str = total_attribute
+        self.results_attribute: str = results_attribute
+        self.sub_results_attribute: str = sub_results_attribute
+        self.limit_attribute: str = limit_attribute
+        self.offset_attribute: str = offset_attribute
         self.headers: dict[str, str] = headers or {}
         self.timeout: int = timeout
         self.params: dict[str, Any] = params or {}
         self.extracted_data: list = []
         self.total_records: int = 0
-        self.response = []
+        self.response: list = []
 
     def get_data(self, partial_write:Optional[bool]=False, params:Optional[dict]=None) -> dict:
         # Environment
@@ -56,44 +62,43 @@ class APIIteratorCall:
                                   headers=self.headers,
                                   timeout=self.timeout)
         # First Call
-        api_ping = api_call.get_data(endpoint=self.endpoint, params=self.params)
+        api_ping = api_call.get_data(params=self.params)
         self.response.extend([{'call':0,'response':api_call.response.status_code}])
 
         # Pagination
         try:
-            if 'total' in api_ping.get('result').keys():
-                total_records = api_ping.get('result').get('total')
+            if self.results_attribute in api_ping.keys():
+                total_records = api_ping.get(self.total_attribute)
+                self.total_records = total_records
+            elif self.total_attribute in api_ping.get(self.results_attribute).keys():
+                total_records = api_ping.get(self.results_attribute).get(self.total_attribute)
                 self.total_records = total_records
             else:
                 raise ValueError('Unexpected response, result or total keys missing')
 
-            if 'limit' in self.params.keys():
-                calls_to_handle = int(np.ceil(total_records / self.params.get('limit')))
+            if self.limit_attribute in self.params.keys():
+                calls_to_handle = int(np.ceil(total_records / self.params.get(self.limit_attribute)))
             else:
-                raise ValueError('Unexpected response, limit key missing in params')
+                calls_to_handle = 1 # No paginated response
 
             for i in tqdm(list(range(0, calls_to_handle)), desc='Handling data'):
-                self.params['offset'] = i * self.params.get('limit')
+                if self.offset_attribute:
+                    self.params[self.offset_attribute] = i * self.params.get(self.limit_attribute)
 
-                data_temp = api_call.get_data(endpoint=self.endpoint, params=self.params)
+                data_temp = api_call.get_data(params=self.params).get(self.results_attribute)
                 self.response.extend([{'call':i+1,'response':api_call.response.status_code}])
 
-                if 'result' in data_temp.keys() and 'records' in data_temp.get('result').keys():
-                    data_temp = data_temp.get('result').get('records')
-                    self.extracted_data.extend(data_temp)
+                self.extracted_data.extend(data_temp)
 
-                    if partial_write:
-                        BucketHandler(path=params.get('path')).exporter(data=data_temp,
-                                                               file_name=params.get('file_name'),
-                                                               folder=params.get('folder'),
-                                                               mode='at')
-
-                else:
-                    raise ValueError('Unexpected response, result or records keys missing')
+                if partial_write:
+                    BucketHandler(path=params.get('path')).exporter(data=data_temp,
+                                                           file_name=params.get('file_name'),
+                                                           folder=params.get('folder'),
+                                                           mode='at')
             return self
 
         except ValueError as e:
-            logging.error(f'Decoding failed from {self.url_base} and {self.endpoint}: {str(e)}')
+            logging.error(f'Decoding failed from {self.url_base}: {str(e)}')
             return {}
 
     def consistency_check(self) -> bool:
@@ -104,11 +109,10 @@ class APIIteratorCall:
 
 
 class APIExtractor(Task):
-    def __init__(self, job_id:str, name:str, data_source:str, config:dict, bucket_path:str):
+    def __init__(self, job_id:str, name:str, data_source:str, config:dict, bucket_path:str, attributes:Optional[dict]=None):
 
         self.config = config
         self.url_base = self.config.get('location')
-        self.endpoint = self.config.get('location_endpoint')
         self.params = self.config.get('params', {})
         self.headers = self.config.get('headers')
         self.timeout = self.config.get('timeout', 50)
@@ -117,11 +121,12 @@ class APIExtractor(Task):
                          name=name,
                          pipeline_code=config.get("pipeline_code"),
                          source_code=config.get("source_code"),
-                         location=f"{self.url_base}{self.endpoint}?resource_id={self.params.get('resource_id')}",
+                         location=f"{self.url_base}?",
                          task_type_code='E')
 
         self.bucket_path = bucket_path
         self.data_source = data_source
+        self.attributes = attributes
         self.data = None
 
     def run(self):
@@ -137,13 +142,14 @@ class APIExtractor(Task):
                              'folder':folder}
 
             iterator_caller = APIIteratorCall(url_base=self.url_base,
-                                              endpoint=self.endpoint,
                                               params=self.params,
                                               headers=self.headers,
-                                              timeout=self.timeout
+                                              timeout=self.timeout,
+                                              **self.attributes
                                               )
 
-            self.data = iterator_caller.get_data(partial_write=True, params=exporter_dict)#.get('extracted_data')
+            self.data = iterator_caller.get_data(partial_write=True, params=exporter_dict)
+
             if isinstance(self.data, list):
                 self.records_processed = len(self.data)
             else:

@@ -1,0 +1,7 @@
+job_name: "ETL Job - Geopolitical Entities"
+
+app_code: "SLPdkGkoVEw"
+app_name: "hephaestus"
+
+countries_pipeline_code: "i7a9wvnzqH8"
+subdivisions_pipeline_code: "dcKPjEPQhfF"

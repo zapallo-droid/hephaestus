@@ -1,7 +1,8 @@
 job_name: "ETL Job - Argentinian Parliament"
 
-app_code: "14a78c7a-4f39-4d7c-9b88-65221be91172"
+app_code: "SLPdkGkoVEw"
 app_name: "hephaestus"
 
-pipeline_domain_code: "0b9ef878-e5ec-444c-921c-0afea2f711fe"
-pipeline_domain_name: "Argentinian Parliament"
+upper_pipeline_code: "jYhFXgQk2vG"
+lower_pipeline_code: "DK95dHeya13"
+legislation_pipeline_code: "Rga1vGhfM4C"

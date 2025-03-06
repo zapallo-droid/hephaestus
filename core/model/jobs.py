@@ -10,10 +10,19 @@ from typing import Optional
 from core.utils.handler_bucket import BucketHandler
 from core.utils.sql_helper import DBSession
 from sqlalchemy.dialects.postgresql import insert
+from core.model.elysium.model_data_ops import Job as JobORM, Task as TaskORM
+from core.utils.sql_helper import DB
 
 
 class Task:
+    STATUS_NOT_STARTED = 'not started'
+    STATUS_STARTED = 'started'
+    STATUS_FINISHED = 'finished'
+    STATUS_FAILED = 'failed'
+
     def __init__(self, job_id:str, name: str, pipeline_code: str, source_code: str, task_type_code:str,
+                 cosmos_path:Optional[str] = None, task_image:Optional[str] = None,
+                 #task_image_status:Optional[str] = None,
                  location:Optional[str] = None):
         self.name = name
         self.location = location
@@ -25,10 +34,13 @@ class Task:
         self.task_id = uuid.uuid4()
         self.start_time = None
         self.end_time = None
-        self.status = 'not started'
+        self.status = Task.STATUS_NOT_STARTED
         self.duration = None
         self.records_processed = 0
         self.task_exception = None
+        self.task_image = task_image
+        self.task_image_status = Task.STATUS_NOT_STARTED if self.task_image else None
+        self.cosmos_path = cosmos_path
         self.stats = {
             'job_id': self.job_id,
             'task_id': self.task_id,
@@ -50,22 +62,27 @@ class Task:
             'location_status': None
         }
 
+
     def start(self):
         self.start_time = dt.now()
-        self.status = 'started'
-        self.stats['started_at'] = self.start_time
+        self.status = Task.STATUS_STARTED
+        self.task_image_status = Task.STATUS_STARTED if self.task_image else None
+        self.stats['started_at'] = self.start_time.isoformat() if self.start_time else None
 
         psutil.cpu_percent(interval=1) # Priming measure (reset state)
         self.stats['memory_usage_start'] = psutil.virtual_memory().used / (1024 ** 2)
         self.stats['cpu_usage_start'] = psutil.cpu_percent(interval=1)
 
+        self.stats_builder()
+
         logging.info(f'{self.name} {self.status}')
 
     def finish(self):
         self.end_time = dt.now()
-        self.stats['ended_at'] = self.end_time
+        self.stats['ended_at'] = self.end_time.isoformat() if self.end_time else None
         self.duration = (self.end_time - self.start_time).total_seconds()
-        self.status = 'finished'
+        self.status = Task.STATUS_FINISHED
+        self.task_image_status = Task.STATUS_FINISHED if self.task_image else None
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
         self.stats['memory_usage_end'] = psutil.virtual_memory().used / (1024 ** 2)
@@ -73,52 +90,121 @@ class Task:
 
         logging.info(f'{self.name} {self.status}')
 
-    def fail(self, exception: Optional[Exception] = None, location_status:Optional[str]=None):
+    def fail(self, exception: Optional[Exception] = None):
+        self.task_exception = traceback.format_exc()
         self.end_time = dt.now()
-        self.stats['ended_at'] = self.end_time
+        self.stats['ended_at'] = self.end_time.isoformat() if self.end_time else None
         self.duration = (self.end_time - self.start_time).total_seconds()
-        self.status = 'failed'
-        self.stats['exception'] = str(self.task_exception) if str(self.task_exception) is not None else str(exception)
+        self.status = Task.STATUS_FAILED
+        self.task_image_status = Task.STATUS_FAILED if self.task_image else None
+        self.stats['exception'] = self.task_exception or str(exception)
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
         self.stats['memory_usage_end'] = psutil.virtual_memory().used / (1024 ** 2)
         self.stats['cpu_usage_end'] = psutil.cpu_percent(interval=1)
 
+        self.stats_builder()
         logging.info(f'Job {self.name}: {self.status}. Exception: {self.task_exception}')
 
     def stats_builder(self):
         self.stats['status'] = self.status
+        self.stats['location'] = self.location
         self.stats['location_status'] = self.location_status
         self.stats['task_image'] = self.task_image
         self.stats['task_image_status'] = self.task_image_status
         self.stats['duration'] = self.duration
-        self.stats['status'] = self.status
         self.stats['records_processed'] = self.records_processed
         self.stats['memory_usage'] = max(0, self.stats['memory_usage_end'] - self.stats['memory_usage_start'])
         self.stats['cpu_usage'] = max(0, self.stats['cpu_usage_end'] - self.stats['cpu_usage_start'])
 
         return self.stats
 
+    def run(self):
+        e = NotImplementedError('Subclasses must implement this method')
+        self.fail(e)
+
+    def bucket_imaging(self, data:list[dict], pipeline_config:dict, bucket_path:str):
+        logging.info(f'Bucketing file: {self.name}')
+
+        try:
+            if data:
+                file_name = f"{pipeline_config.get('pipeline_code', '')}_{self.source_code}"
+
+                if self.task_type_code == "E":
+                    folder = f'raw/{self.job_id}'
+                elif self.task_type_code == "T":
+                    folder = f'transformed/{self.job_id}'
+                else:
+                    folder = None
+                    logging.error(f'Task type code should be E or T, received {self.task_type_code}')
+
+                file_path = os.path.join(bucket_path, folder)
+
+                logging.info(f'Exporting {self.name} to {file_path}')
+
+                self.task_image = os.path.join(file_path, f'{file_name}.json.gz')
+                self.records_processed = len(data)
+
+                bucket = BucketHandler(path=bucket_path)
+                bucket.exporter(data=data,
+                                file_name=file_name,
+                                folder=folder,
+                                partial=False)
+
+                logging.info(f'{self.records_processed} records, successfully loaded')
+
+            else:
+                logging.warning("No data received")
+                e = Exception("No data received")
+                self.fail(e)
+                raise e
+
+        except Exception as e:
+            self.fail(e)
+
+
+    def execute(self, db):
+        self.start()
+        db.records_loader(model=TaskORM, records=[TaskORM(**self.stats)])
+
+        try:
+            self.run()
+            self.finish()
+        except Exception as e:
+            self.fail(e)
+        finally:
+            self.stats_builder()
+
 
 class Job:
-    def __init__(self, name: str, app_code:Optional[str]=None):
+    STATUS_NOT_STARTED = 'not started'
+    STATUS_STARTED = 'started'
+    STATUS_FINISHED = 'finished'
+    STATUS_FAILED = 'failed'
+
+    def __init__(self, name: str, db_config:dict, cosmos_path:str, app_code:Optional[str]=None):
+        self.tasks_stats = None
         self.name = name
+        self.db_config = db_config
         self.job_id = uuid.uuid4()
         self.app_code = app_code
         self.tasks = []
         self.start_time = None
         self.end_time = None
-        self.status = 'not started'
+        self.status = Job.STATUS_NOT_STARTED
         self.duration = None
         self.job_exception = None
+        self.cosmos_path = cosmos_path
         self.stats = {
             'name': self.name,
             'app_code': self.app_code,
             'job_id': self.job_id,
             'memory_usage_start': 0,
             'memory_usage_end': 0,
+            'memory_usage':0,
             'cpu_usage_start': 0,
             'cpu_usage_end': 0,
+            'cpu_usage':0,
             'started_at': None,
             'ended_at': None,
             'duration': None,
@@ -135,8 +221,8 @@ class Job:
 
     def start(self):
         self.start_time = dt.now()
-        self.stats['started_at'] = self.start_time
-        self.status = 'started'
+        self.stats['started_at'] = self.start_time.isoformat() if self.start_time else None
+        self.status = Job.STATUS_STARTED
 
         # Prime CPU measure and reset
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
@@ -147,8 +233,8 @@ class Job:
 
     def finish(self):
         self.end_time = dt.now()
-        self.stats['ended_at'] = self.end_time
-        self.status = 'finished'
+        self.stats['ended_at'] = self.end_time.isoformat() if self.end_time else None
+        self.status = Job.STATUS_FINISHED
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
         self.stats['memory_usage_end'] = psutil.virtual_memory().used / (1024 ** 2)
@@ -156,15 +242,17 @@ class Job:
 
         logging.info(f'Job {self.name}: {self.status}')
 
-    def fail(self):
+    def fail(self, exception: Optional[Exception] = None):
         self.end_time = dt.now()
-        self.stats['ended_at'] = self.end_time
-        self.status = 'failed'
+        self.stats['ended_at'] = self.end_time.isoformat() if self.end_time else None
+        self.status = Job.STATUS_FAILED
+        self.stats['exception'] = self.job_exception or str(exception)
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
         self.stats['memory_usage_end'] = psutil.virtual_memory().used / (1024 ** 2)
         self.stats['cpu_usage_end'] = psutil.cpu_percent(interval=1)
 
+        self.stats_builder()
         logging.info(f'Job {self.name}: {self.status}. Exception: {str(self.job_exception)}')
 
     def stats_builder(self):
@@ -185,36 +273,40 @@ class Job:
 
     def execute(self):
         self.start()
+        db = DB(db_config=self.db_config)
+        db.records_loader(model=JobORM, records=[JobORM(**self.stats)])
+
         try:
             for task in self.tasks:
-                try:
-                    task.start()
-                    task.run(self)
-                    task.finish()
-                except Exception as e:
-                    task.fail(e)
+                task.execute(db=db)
             self.finish()
         except Exception as e:
-            self.job_exception = e
-            self.fail()
+            self.fail(e)
         finally:
             self.stats_builder()
 
+    def add_tasks(self, *tasks):
+        raise NotImplementedError('Subclasses must implement this method')
+
     def run_job(self):
         # Adding Job Tasks
-        self.add_extract_task()
+        self.add_tasks()
 
         # Job Execution
         self.execute()
+
+        # DB Init
+        db = DB(db_config=self.db_config)
 
         job_stats, tasks_stats = self.stats_builder()
 
         # STATS
         # - Stats Data To Daedalus
+        session = None
         try:
-            logging.info("Sending Job {job.get('job_id')} stats to Daedalus DB")
-            db_session = DBSession(**self.daedalus_config)
-            session = db_session.create()
+            logging.info(f"Sending Job {job_stats.get('job_id')} stats to Daedalus DB")
+            #db_session = DBSession(**self.db_config)
+            #session = db_session.create()
 
             # -- Loading data to DB
             job_data = {
@@ -237,34 +329,27 @@ class Job:
                 'number_of_tasks': job_stats.get('number_of_tasks'),
                 'app_code': job_stats.get('app_code')
             }
-            sentence = insert(self.JobORM).values(job_data).on_conflict_do_nothing(index_elements=['job_id'])
-            session.execute(sentence)
 
-            for task in tasks_stats:
-                sentence = insert(self.TaskORM).values(task).on_conflict_do_nothing(index_elements=['task_id'])
-                session.execute(sentence)
+            # Loading Stats
+            db.records_loader(model=JobORM, records=[JobORM(**job_data)])
+            db.records_loader(model=TaskORM, records=[TaskORM(**x) for x in tasks_stats])
 
-            session.commit()
+            #session.commit()
 
         except Exception as e:
-            session.rollback()
+            #if session:
+            #    session.rollback()
             logging.warning(
                 f"Session rollback --> Exception occurred: {e}\n"
                 f"Traceback details:\n{traceback.format_exc()}"
             )
 
         finally:
-            session.close()
+            #session.close()
+            db.session.close()
 
             # - Stats Data To Cosmos
-            logging.info("Writing Job {job.get('job_id')} stats" in {os.path.join(self.cosmos_path, 'stats/')})
-
-
-            for key in ['started_at', 'ended_at']:
-                job_stats[key] = job_stats.get(key).isoformat()
-
-                for item in tasks_stats:
-                    item[key] = item.get(key).isoformat()
+            logging.info(f"Writing Job {job_stats.get('job_id')} stats in {os.path.join(self.cosmos_path, 'stats/')}")
 
             for record in tasks_stats:
                 for key in ['job_id','task_id','pipeline_code','source_code','task_type_code']:
@@ -275,10 +360,31 @@ class Job:
 
             try:
                 for stats in [(job_stats, 'J'), (tasks_stats, 'T')]:
-                    BucketHandler(path=self.cosmos_path).exporter(data=stats[0],
-                                                                  file_name=f'{stats[1]}_{self.job_id}',
-                                                                  folder='jobs/',
-                                                                  mode='wt')
+                    if len(stats[0])==0:
+                        logging.warning(f'No data coming from {stats}')
+                    else:
+                        BucketHandler(path=self.cosmos_path).exporter(data=stats[0],
+                                                                      file_name=f'{stats[1]}_{self.job_id}',
+                                                                      folder='jobs/',
+                                                                      mode='wt')
 
             except Exception as e:
                 logging.error(f'Exception raised when loading stats into Cosmos --> {str(e)}')
+
+
+class TaskManager:
+    def __init__(self, system_path: str, cosmos_path: str, job_id: str, pipeline_code: str, db_config: dict):
+        self.system_path = system_path
+        self.cosmos_path = cosmos_path
+        self.job_id = job_id
+        self.pipeline_code = pipeline_code
+        self.db_config = db_config
+        self.tasks = []
+
+    def add_task(self):
+        e = NotImplementedError('Subclasses must implement this method')
+        raise e
+
+    def get_tasks(self):
+        return self.tasks
+

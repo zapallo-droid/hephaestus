@@ -1,6 +1,5 @@
 [
   {
-    "source_code": "99ae9295-1342-44c9-9c74-e559e8306eef",
     "source_name": "ISCO-08",
     "location_type": "FILE",
     "location": "https://www.ilo.org/ilostat-files/ISCO/newdocs-08-2021/ISCO-08/ISCO-08%20EN%20Structure%20and%20definitions.xlsx",
@@ -10,9 +9,6 @@
     "params": null,
     "headers": null,
     "timeout": 50,
-    "pipeline_code": "23701e29-1033-4dfb-b879-417f3a39f386",
-    "active": true,
-    "created_at": "2024-12-07 02:24:52.155094",
-    "updated_at": "2024-12-07 02:24:52.155094"
+    "pipeline_code": "UY3zhDM2P2X"
   }
 ]
