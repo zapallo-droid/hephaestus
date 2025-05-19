@@ -1,0 +1,8 @@
+numpy
+psutil
+python-dotenv
+pyyaml
+requests
+sqlalchemy
+tqdm
+
