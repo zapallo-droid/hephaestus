@@ -1,0 +1,7 @@
+job_name: "ETL Job - NAME"
+
+app_code: "APPCODE"
+app_name: "APPNAME"
+
+subpipeline_name_1: "SUBPIPELINECODE1"
+subpipeline_name_2: "SUBPIPELINECODE2"
