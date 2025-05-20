@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="hephaestus",
+    name="hephaestus-pframe",
     version="0.1.0",
-    packages=find_packages(where="hephaestus"),
-    package_dir={"": "hephaestus"},
+    packages=find_packages(where="hephaestus_pframe"),
+    package_dir={"": "hephaestus_pframe"},
     install_requires=[
         "numpy",
         "psutil",
