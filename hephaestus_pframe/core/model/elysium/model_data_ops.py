@@ -94,10 +94,10 @@ class Pipeline(Base):
     created_by = Column(Text, nullable=False, default=getpass.getuser())
     modified_by = Column(Text, nullable=False, default=getpass.getuser())
 
-    apps = relationship('App', back_populates='examples')
-    tasks = relationship('Task', back_populates='examples')
-    sources = relationship('Source', back_populates='examples')
-    pipeline_domains = relationship('PipelineDomain', back_populates='examples')
+    apps = relationship('App', back_populates='pipelines')
+    tasks = relationship('Task', back_populates='pipelines')
+    sources = relationship('Source', back_populates='pipelines')
+    pipeline_domains = relationship('PipelineDomain', back_populates='pipelines')
 
     def __init__(self, app_code, pipeline_domain_code, pipeline_name):
         self.pipeline_name = pipeline_name
@@ -412,16 +412,16 @@ class OperationType(Base):
 
     audit_logs = relationship('AuditLog', back_populates='operation_types')
 
-    def __init__(self, task_type_code, task_type_name):
-        self.task_type_code = task_type_code
-        self.task_type_name = task_type_name
+    def __init__(self, operation_type_code, operation_type_name):
+        self.operation_type_code = operation_type_code
+        self.operation_type_name = operation_type_name
         self.updated_at = datetime.utcnow()
         self.modified_by = getpass.getuser()
 
     def to_dict(self):
         return {
-            'task_type_code': self.task_type_code,
-            'task_type_name': self.task_type_name,
+            'operation_type_code': self.operation_type_code,
+            'operation_type_name': self.operation_type_name,
             'created_at': self.created_at,
             'updated_at': self.updated_at,
             'created_by': self.created_by,
