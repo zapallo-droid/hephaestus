@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="hephaestus-pframe",
+    name="hephaestus_pframe-pframe",
     version="0.1.0",
     packages=find_packages(where="hephaestus_pframe"),
     package_dir={"": "hephaestus_pframe"},

@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import Column, Float, Integer, Text, JSON, DateTime, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, declarative_base
-from hephaestus.core.utils.general_helper import deterministic_code
+from hephaestus_pframe.core.utils.general_helper import deterministic_code
 
 # Complementary Resources
 import base58

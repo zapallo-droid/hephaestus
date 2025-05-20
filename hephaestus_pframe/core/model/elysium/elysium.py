@@ -3,8 +3,8 @@ import logging
 import gzip
 import json
 from sqlalchemy.ext.declarative import declarative_base
-from hephaestus.core.model.jobs import Task
-from hephaestus.core.utils.sql_helper import DB
+from hephaestus_pframe.core.model.jobs import Task
+from hephaestus_pframe.core.utils.sql_helper import DB
 
 
 class ElysiumLoad(Task):

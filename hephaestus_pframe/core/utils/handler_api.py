@@ -4,8 +4,8 @@ import numpy as np
 import logging
 from tqdm import tqdm
 from typing import Any, Optional
-from hephaestus.core.utils.handler_bucket import BucketHandler
-from hephaestus.core.model.jobs import Task
+from hephaestus_pframe.core.utils.handler_bucket import BucketHandler
+from hephaestus_pframe.core.model.jobs import Task
 
 logging.basicConfig(level=logging.INFO)
 

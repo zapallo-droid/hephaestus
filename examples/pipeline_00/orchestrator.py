@@ -1,7 +1,7 @@
 import os
-from hephaestus.core import ProjectConfig
-from hephaestus.core import Job
-from hephaestus.core.model.elysium.model_data_ops import Job as JobORM, Task as TaskORM
+from hephaestus_pframe.core import ProjectConfig
+from hephaestus_pframe.core import Job
+from hephaestus_pframe.core.model.elysium.model_data_ops import Job as JobORM, Task as TaskORM
 from examples.pipeline_00.subpipeline_1.src.orchestrator import ISOCountries
 from examples.pipeline_00.subpipeline_2.src.orchestrator import ISOSubdivisions
 

@@ -7,9 +7,9 @@ import uuid
 import traceback
 import logging
 from typing import Optional
-from hephaestus.core.utils.handler_bucket import BucketHandler
-from hephaestus.core.model.elysium.model_data_ops import Job as JobORM, Task as TaskORM
-from hephaestus.core.utils.sql_helper import DB
+from hephaestus_pframe.core.utils.handler_bucket import BucketHandler
+from hephaestus_pframe.core.model.elysium.model_data_ops import Job as JobORM, Task as TaskORM
+from hephaestus_pframe.core.utils.sql_helper import DB
 
 
 class Task:
