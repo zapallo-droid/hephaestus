@@ -1,9 +1,9 @@
 import os
 import logging
 from dotenv import load_dotenv
-from hephaestus.core.utils.sql_helper import DB
-from hephaestus.core.model.elysium.model_data_ops import (App, PipelineDomain, Pipeline, Source, Job,
-                                                          TaskType, Task, OperationType, AuditLog)
+from hephaestus_pframe.core.utils.sql_helper import DB
+from hephaestus_pframe.core.model.elysium.model_data_ops import (App, PipelineDomain, Pipeline, Source, Job,
+                                                                 TaskType, Task, OperationType, AuditLog)
 
 load_dotenv()
 

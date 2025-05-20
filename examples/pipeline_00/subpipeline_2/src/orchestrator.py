@@ -1,8 +1,8 @@
 import os
 from tqdm import tqdm
-from hephaestus.core import TaskManager
-from hephaestus.core import ConfigSources
-from hephaestus.core.model.elysium.elysium import ElysiumLoad
+from hephaestus_pframe.core import TaskManager
+from hephaestus_pframe.core import ConfigSources
+from hephaestus_pframe.core.model.elysium.elysium import ElysiumLoad
 ## INCLUDE MODEL CLASSES
 ## INCLUDE PIPELINE SPECIFIC JOBS CLASSES
 

@@ -3,7 +3,7 @@ import logging
 import os
 import gzip
 from typing import Any, Union
-from hephaestus.core.model.jobs import Task
+from hephaestus_pframe.core.model.jobs import Task
 
 
 class FileCall:

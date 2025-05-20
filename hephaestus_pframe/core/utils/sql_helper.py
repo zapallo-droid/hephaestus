@@ -5,8 +5,8 @@ from typing import Optional, Union
 from sqlalchemy import create_engine, MetaData, select, func
 from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
-from hephaestus.core.utils.general_helper import json_cleaner
-from hephaestus.core.model.elysium.model_data_ops import Source as SourceORM, Task as TaskORM, AuditLog as AuditLogORM
+from hephaestus_pframe.core.utils.general_helper import json_cleaner
+from hephaestus_pframe.core.model.elysium.model_data_ops import Source as SourceORM, Task as TaskORM, AuditLog as AuditLogORM
 
 
 class DBConnection:
