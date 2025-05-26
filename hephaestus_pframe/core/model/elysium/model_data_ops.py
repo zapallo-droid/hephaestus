@@ -1,6 +1,6 @@
 # General libraries for DB
 import uuid
-
+import enum
 from sqlalchemy import Column, Float, Integer, Text, JSON, DateTime, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, declarative_base
@@ -17,6 +17,18 @@ Base = declarative_base()
 
 # Schema
 schema = 'operations'
+
+# Enum
+class TaskType(enum.Enum):
+    EXTRACT = 'E'
+    TRANSFORM = 'T'
+    LOAD = 'L'
+
+class Status(enum.Enum):
+    FINISHED = 'finished'
+    FAILED = 'failed'
+    PENDING = 'pending'
+    STARTED = 'started'
 
 # General Use Classes
 class App(Base):
