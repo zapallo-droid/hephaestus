@@ -19,12 +19,25 @@ Base = declarative_base()
 schema = 'operations'
 
 # Enum
-class TaskType(enum.Enum):
-    EXTRACT = 'E'
-    TRANSFORM = 'T'
-    LOAD = 'L'
+class TaskTypeEnum(enum.Enum):
+    EXTRACT = ('E', 'extract')
+    TRANSFORM = ('T', 'transform')
+    LOAD = ('L', 'load')
 
-class Status(enum.Enum):
+    def __init__(self, code, label):
+        self.code = code
+        self.label = label
+
+class OperationsTypeEnum(enum.Enum):
+    CREATE = ('C', 'create')
+    UPDATE = ('U', 'update')
+    DELETE = ('D', 'delete')
+
+    def __init__(self, code, label):
+        self.code = code
+        self.label = label
+
+class StatusEnum(enum.Enum):
     FINISHED = 'finished'
     FAILED = 'failed'
     PENDING = 'pending'

@@ -8,7 +8,7 @@ import traceback
 import logging
 from typing import Optional
 from hephaestus_pframe.core.utils.handler_bucket import BucketHandler
-from hephaestus_pframe.core.model.elysium.model_data_ops import Job as JobORM, Task as TaskORM, Status
+from hephaestus_pframe.core.model.elysium.model_data_ops import Job as JobORM, Task as TaskORM, StatusEnum as Status
 from hephaestus_pframe.core.utils.sql_helper import DB
 
 
@@ -16,7 +16,6 @@ class Task:
 
     def __init__(self, job_id:str, name: str, pipeline_code: str, source_code: str, task_type_code:str,
                  cosmos_path:Optional[str] = None, task_image:Optional[str] = None,
-                 #task_image_status:Optional[str] = None,
                  location:Optional[str] = None):
         self.name = name
         self.location = location
