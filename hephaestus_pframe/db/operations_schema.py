@@ -3,7 +3,8 @@ import logging
 from dotenv import load_dotenv
 from hephaestus_pframe.core.utils.sql_helper import DB
 from hephaestus_pframe.core.model.elysium.model_data_ops import (App, PipelineDomain, Pipeline, Source, Job,
-                                                                 TaskType, Task, OperationType, AuditLog)
+                                                                 TaskType, Task, OperationType, AuditLog, TaskTypeEnum,
+                                                                 OperationsTypeEnum)
 
 load_dotenv()
 
@@ -34,17 +35,11 @@ def init_operations_schema(env: list[str]=None):
         logging.info(f"Inserting in 'operations' the standard types for Tasks and Operations:")
 
         # Standard inserts
-        db.records_loader(model=TaskType, records=[
-            {'task_type_code': 'E', 'task_type_name': 'extract'},
-            {'task_type_code': 'T', 'task_type_name': 'transform'},
-            {'task_type_code': 'L', 'task_type_name': 'load'}
-        ])
+        records = [{'task_type_code': record.code, 'task_type_name': record.label} for record in TaskTypeEnum]
+        db.records_loader(model=TaskType, records=records)
 
-        db.records_loader(model=OperationType, records=[
-            {'operation_type_code': 'C', 'operation_type_name': 'create'},
-            {'operation_type_code': 'U', 'operation_type_name': 'update'},
-            {'operation_type_code': 'D', 'operation_type_name': 'delete'}
-        ])
+        records = [{'operation_type_code': record.code, 'operation_type_name': record.label} for record in OperationsTypeEnum]
+        db.records_loader(model=OperationType, records=records)
 
         logging.info(f"Standard values inserted into operations.task_type and operations.operation_type of env: {e}")
 
