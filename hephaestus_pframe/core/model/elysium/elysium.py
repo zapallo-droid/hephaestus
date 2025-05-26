@@ -5,6 +5,7 @@ import json
 from sqlalchemy.ext.declarative import declarative_base
 from hephaestus_pframe.core.model.jobs import Task
 from hephaestus_pframe.core.utils.sql_helper import DB
+from hephaestus_pframe.core.model.elysium.model_data_ops import TaskType
 
 
 class ElysiumLoad(Task):
@@ -15,7 +16,7 @@ class ElysiumLoad(Task):
                          pipeline_code=config.get("pipeline_code"),
                          source_code=config.get("source_code"),
                          location=location,
-                         task_type_code='L')
+                         task_type_code=TaskType.LOAD.value)
 
         self.db_config = db_config
         self.model = model

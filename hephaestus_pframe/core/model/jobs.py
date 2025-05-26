@@ -8,15 +8,11 @@ import traceback
 import logging
 from typing import Optional
 from hephaestus_pframe.core.utils.handler_bucket import BucketHandler
-from hephaestus_pframe.core.model.elysium.model_data_ops import Job as JobORM, Task as TaskORM
+from hephaestus_pframe.core.model.elysium.model_data_ops import Job as JobORM, Task as TaskORM, Status
 from hephaestus_pframe.core.utils.sql_helper import DB
 
 
 class Task:
-    STATUS_NOT_STARTED = 'not started'
-    STATUS_STARTED = 'started'
-    STATUS_FINISHED = 'finished'
-    STATUS_FAILED = 'failed'
 
     def __init__(self, job_id:str, name: str, pipeline_code: str, source_code: str, task_type_code:str,
                  cosmos_path:Optional[str] = None, task_image:Optional[str] = None,
@@ -32,13 +28,13 @@ class Task:
         self.task_id = uuid.uuid4()
         self.start_time = None
         self.end_time = None
-        self.status = Task.STATUS_NOT_STARTED
+        self.status = Status.PENDING.value
         self.duration = None
         self.records_processed = 0
         self.files_processed = 0
         self.task_exception = None
         self.task_image = task_image
-        self.task_image_status = Task.STATUS_NOT_STARTED if self.task_image else None
+        self.task_image_status = Status.PENDING.value if self.task_image else None
         self.cosmos_path = cosmos_path
         self.stats = {
             'job_id': self.job_id,
@@ -65,8 +61,8 @@ class Task:
 
     def start(self):
         self.start_time = dt.now()
-        self.status = Task.STATUS_STARTED
-        self.task_image_status = Task.STATUS_STARTED if self.task_image else None
+        self.status = Status.STARTED.value
+        self.task_image_status = Status.STARTED.value if self.task_image else None
         self.stats['started_at'] = self.start_time.isoformat() if self.start_time else None
 
         psutil.cpu_percent(interval=1) # Priming measure (reset state)
@@ -81,8 +77,8 @@ class Task:
         self.end_time = dt.now()
         self.stats['ended_at'] = self.end_time.isoformat() if self.end_time else None
         self.duration = (self.end_time - self.start_time).total_seconds()
-        self.status = Task.STATUS_FINISHED
-        self.task_image_status = Task.STATUS_FINISHED if self.task_image else None
+        self.status = Status.FINISHED.value
+        self.task_image_status = Status.FINISHED.value if self.task_image else None
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
         self.stats['memory_usage_end'] = psutil.virtual_memory().used / (1024 ** 2)
@@ -95,8 +91,8 @@ class Task:
         self.end_time = dt.now()
         self.stats['ended_at'] = self.end_time.isoformat() if self.end_time else None
         self.duration = (self.end_time - self.start_time).total_seconds()
-        self.status = Task.STATUS_FAILED
-        self.task_image_status = Task.STATUS_FAILED if self.task_image else None
+        self.status = Status.FAILED.value
+        self.task_image_status = Status.FAILED.value if self.task_image else None
         self.stats['exception'] = self.task_exception or str(exception)
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
@@ -179,10 +175,6 @@ class Task:
 
 
 class Job:
-    STATUS_NOT_STARTED = 'not started'
-    STATUS_STARTED = 'started'
-    STATUS_FINISHED = 'finished'
-    STATUS_FAILED = 'failed'
 
     def __init__(self, name: str, db_config:dict, cosmos_path:str, app_code:Optional[str]=None):
         self.tasks_stats = None
@@ -193,7 +185,7 @@ class Job:
         self.tasks = []
         self.start_time = None
         self.end_time = None
-        self.status = Job.STATUS_NOT_STARTED
+        self.status = Status.PENDING.value
         self.duration = None
         self.job_exception = None
         self.cosmos_path = cosmos_path
@@ -224,7 +216,7 @@ class Job:
     def start(self):
         self.start_time = dt.now()
         self.stats['started_at'] = self.start_time.isoformat() if self.start_time else None
-        self.status = Job.STATUS_STARTED
+        self.status = Status.STARTED.value
 
         # Prime CPU measure and reset
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
@@ -236,7 +228,7 @@ class Job:
     def finish(self):
         self.end_time = dt.now()
         self.stats['ended_at'] = self.end_time.isoformat() if self.end_time else None
-        self.status = Job.STATUS_FINISHED
+        self.status = Status.FINISHED.value
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
         self.stats['memory_usage_end'] = psutil.virtual_memory().used / (1024 ** 2)
@@ -247,7 +239,7 @@ class Job:
     def fail(self, exception: Optional[Exception] = None):
         self.end_time = dt.now()
         self.stats['ended_at'] = self.end_time.isoformat() if self.end_time else None
-        self.status = Job.STATUS_FAILED
+        self.status = Status.FAILED.value
         self.stats['exception'] = self.job_exception or str(exception)
 
         psutil.cpu_percent(interval=1)  # Priming measure (reset state)
