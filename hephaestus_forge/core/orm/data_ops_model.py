@@ -103,10 +103,12 @@ class SourceORM(Base):
     extension: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     extract_type: Mapped[str] = mapped_column(Text, nullable=False)
     params: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    pagination_params: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     headers: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     timeout: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     pipeline_code: Mapped[str] = mapped_column(Text, ForeignKey(f'{SCHEMA}.pipeline.pipeline_code'), nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    comments: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     ## --RELATIONSHIPS-- ##
     pipeline: Mapped["PipelineORM"] = relationship("PipelineORM", back_populates="sources")
